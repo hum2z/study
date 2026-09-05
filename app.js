@@ -94,7 +94,7 @@ const overall = () => SYLLABUS.reduce((a, s) => {
 function countdownStrip() {
   return `<div class="cds">` + CD_META.map(m => {
     const iso = state.dates[m.key], d = daysUntil(iso), past = d !== null && d < 0;
-    return `<div class="cd glass ${past ? "past" : ""}" style="--c:${m.colour}">
+    return `<div class="cd card ${past ? "past" : ""}" style="--c:${m.colour}">
       <div class="lab">${m.label}</div>
       <div class="num">${d === null ? "—" : past ? "✓" : d}</div>
       <div class="unit">${d === null ? "no date" : past ? "done" : d === 1 ? "day left" : "days left"}</div>
@@ -116,14 +116,13 @@ function ring(pct, colour = "var(--blue)") {
 const initials = s => s.short || s.name.slice(0, 2).toUpperCase();
 
 function subjectRows() {
-  return `<div class="list glass">` + SYLLABUS.map(s => {
+  return `<div class="card">` + SYLLABUS.map(s => {
     const st = subjectStats(s);
     return `<button class="row" data-open="${s.id}" style="--c:${s.colour}">
       <span class="tile">${initials(s)}</span>
       <span class="row-main">
         <b>${esc(s.name)}</b>
         <span>${st.chaptersDone}/${st.chapters} chapters · ${st.total - st.learnt} topics left</span>
-        <span class="minibar"><i style="width:${st.pct}%"></i></span>
       </span>
       <span class="badge">${st.pct}%</span>
       <svg class="ico chev"><use href="#i-chevron"/></svg>
@@ -146,7 +145,7 @@ function screenHome() {
   </div>
   ${countdownStrip()}
   <div class="screen-in">
-    <div class="hero glass">
+    <div class="hero card">
       ${ring(pct)}
       <div class="hero-txt">
         <h2>${o.learnt} of ${o.total}</h2>
@@ -176,7 +175,7 @@ function screenSubject(subj) {
   let html = `<div class="screen-in">
     <h1 class="large-title">${esc(subj.name)}</h1>
     <p class="large-sub">${esc(subj.code)}</p>
-    <div class="hero glass" style="--c:${subj.colour}">
+    <div class="hero card" style="--c:${subj.colour}">
       ${ring(st.pct, subj.colour)}
       <div class="hero-txt">
         <h2>${st.learnt} of ${st.total}</h2>
@@ -186,7 +185,7 @@ function screenSubject(subj) {
     </div>`;
 
   for (const g of subj.groups) {
-    html += `<div class="sec-hdr">${esc(g.name)}</div><div class="list glass">`;
+    html += `<div class="sec-hdr">${esc(g.name)}</div><div class="card">`;
     for (const ch of g.chapters) {
       const id = `${subj.id}:${ch.n}`;
       const ms = ch.subs.map((_, i) => mark(keyOf(subj.id, ch.n, i)));
@@ -228,7 +227,7 @@ function screenSubject(subj) {
 }
 
 function screenSettings() {
-  const dateRow = (k, label) => `<div class="row">
+  const dateRow = (k, label) => `<div class="row plain">
       <span class="row-main"><b>${label}</b></span>
       <input type="date" data-date="${k}" value="${state.dates[k] || ""}">
     </div>`;
@@ -243,14 +242,14 @@ function screenSettings() {
     </div>
 
     <div class="sec-hdr">Exam dates</div>
-    <div class="list glass">
+    <div class="card">
       ${dateRow("ielts", "IELTS")}
       ${dateRow("mock", "Mock 1")}
       ${dateRow("final", "May/June")}
     </div>
 
     <div class="sec-hdr">Your data</div>
-    <div class="list glass">
+    <div class="card">
       <button class="act-row" id="exportBtn">Export backup</button>
       <button class="act-row" id="importBtn">Import backup</button>
       <button class="act-row danger" id="resetBtn">Reset all progress</button>

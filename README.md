@@ -2,8 +2,10 @@
 
 An offline-first PWA for tracking A Level and IELTS revision, chapter by chapter,
 with live countdowns to each exam. Built for the iPhone: it installs to the home
-screen and is styled after iOS — translucent "liquid glass" materials over a
-tinted backdrop, SF system type, a bottom tab bar and push navigation.
+screen and follows the conventions of iOS Settings: opaque grouped cards on a
+plain background, hairline separators inset to the text, coloured icon tiles,
+SF system type, a bottom tab bar and push navigation. Blur is used only where
+Apple uses it — the floating nav bar and tab bar that content scrolls beneath.
 
 ## What's in it
 

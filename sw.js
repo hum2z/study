@@ -1,5 +1,5 @@
 /* Cache-first app shell so the tracker opens with no connection. */
-const CACHE = "study-tracker-v4";
+const CACHE = "study-tracker-v5";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js", "./syllabus.js",
   "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"
