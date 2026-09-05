@@ -55,8 +55,17 @@ python3 -m http.server 8000
 
 A service worker needs `https://` or `localhost`, so opening `index.html`
 straight off the filesystem works but won't cache for offline use. To install
-it on a phone, host the folder anywhere static (GitHub Pages, Netlify, Vercel),
-open it in the browser and choose **Add to Home Screen** / **Install**.
+it on a phone, host the folder anywhere static, open it in the browser and
+choose **Add to Home Screen** / **Install**.
+
+### Vercel
+
+Import the repo and deploy — no build step, no environment variables. Serve it
+from the default branch, since Vercel builds that for the production URL.
+`vercel.json` marks `sw.js`, `index.html` and the manifest as
+`must-revalidate` so a new deploy actually reaches devices that have already
+installed the app; without it a cached service worker can pin someone to an
+old version indefinitely.
 
 ## Files
 
