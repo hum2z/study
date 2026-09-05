@@ -6,9 +6,10 @@
 const SYLLABUS = [
   {
     id: "cs",
+    short: "CS",
     name: "Computer Science",
     code: "Cambridge 9618 · Year 2",
-    colour: "#4f8cff",
+    colour: "#0A84FF",
     groups: [
       { name: "Paper 3 — Advanced Theory", chapters: [
         { n: "13", t: "Data Representation", subs: ["13.1 User-defined data types", "13.2 File organisation and access", "13.3 Floating-point numbers, representation and manipulation"] },
@@ -34,9 +35,10 @@ const SYLLABUS = [
   },
   {
     id: "phy",
+    short: "PH",
     name: "Physics",
     code: "Cambridge 9702 · Year 2",
-    colour: "#ff8a4f",
+    colour: "#FF9F0A",
     groups: [
       { name: "Paper 4 — A Level topics", chapters: [
         { n: "12", t: "Motion in a Circle", subs: ["12.1 Kinematics of uniform circular motion", "12.2 Centripetal acceleration"] },
@@ -72,9 +74,10 @@ const SYLLABUS = [
   },
   {
     id: "p3",
+    short: "P3",
     name: "Pure Maths 3",
     code: "Edexcel IAL WMA13",
-    colour: "#3ecf8e",
+    colour: "#30D158",
     groups: [
       { name: "Unit P3 content", chapters: [
         { n: "1", t: "Algebra and Functions", subs: ["1.1 Simplification of rational expressions, algebraic division", "1.2 Functions: domain, range, composition, inverses", "1.3 The modulus function", "1.4 Combinations of transformations"] },
@@ -88,9 +91,10 @@ const SYLLABUS = [
   },
   {
     id: "p4",
+    short: "P4",
     name: "Pure Maths 4",
     code: "Edexcel IAL WMA14",
-    colour: "#b06bff",
+    colour: "#BF5AF2",
     groups: [
       { name: "Unit P4 content", chapters: [
         { n: "1", t: "Proof", subs: ["1.1 Proof by contradiction"] },
@@ -105,9 +109,10 @@ const SYLLABUS = [
   },
   {
     id: "m1",
+    short: "M1",
     name: "Mechanics 1",
     code: "Edexcel IAL WME01",
-    colour: "#ff5d8f",
+    colour: "#FF375F",
     groups: [
       { name: "Unit M1 content", chapters: [
         { n: "1", t: "Mathematical Models in Mechanics", subs: ["1.1 Basic ideas of mathematical modelling in mechanics"] },
@@ -121,9 +126,10 @@ const SYLLABUS = [
   },
   {
     id: "ielts",
+    short: "IE",
     name: "IELTS Academic",
     code: "British Council / IDP",
-    colour: "#ffd166",
+    colour: "#40C8E0",
     groups: [
       { name: "Listening (30 min)", chapters: [
         { n: "L1", t: "Listening Skills", subs: ["Part 1 – everyday conversation (form/note completion)", "Part 2 – monologue on a social situation (maps, matching)", "Part 3 – academic discussion (MCQ, matching)", "Part 4 – academic lecture (note completion)", "Spelling, numbers, dates and plurals", "Distractors and paraphrase spotting"] }

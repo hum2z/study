@@ -1,7 +1,9 @@
 # Study Tracker
 
 An offline-first PWA for tracking A Level and IELTS revision, chapter by chapter,
-with live countdowns to each exam.
+with live countdowns to each exam. Built for the iPhone: it installs to the home
+screen and is styled after iOS — translucent "liquid glass" materials over a
+tinted backdrop, SF system type, a bottom tab bar and push navigation.
 
 ## What's in it
 
@@ -27,12 +29,22 @@ listed: Physics starts at topic 12, Computer Science at section 13. The A2
 papers still assume that AS knowledge — add the earlier topics back in
 `syllabus.js` if you want them tracked.
 
-## Appearance
+## Getting around
+
+Three tabs at the bottom:
+
+- **Home** — countdowns, an overall progress ring, and the pace needed to finish
+- **Subjects** — every subject; tap one to push into its chapters
+- **Settings** — appearance, exam dates, backup and reset
+
+Inside a subject, tapping a chapter expands its topics in place. The large title
+collapses into the nav bar as you scroll, and content passes under the frosted
+bars the way it does in a native app.
 
 **⚙ → Appearance** switches between Auto, Light and Dark. Auto follows the
-device setting and reacts if it changes while the app is open; Light and Dark
-override it. The choice is stored with your progress and applied before first
-paint, so a forced theme never flashes the wrong colours on load.
+device and reacts if it changes while the app is open. The choice is stored with
+your progress and applied before first paint, so a forced theme never flashes
+the wrong colours on load.
 
 ## Countdowns
 

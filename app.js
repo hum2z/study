@@ -1,4 +1,5 @@
-/* Study Tracker — offline-first PWA */
+/* Study — offline revision tracker.
+   Three tabs, with subject detail pushed on top of the Subjects tab. */
 
 const STORE = "study-tracker-v1";
 const DEFAULT_DATES = {
@@ -7,14 +8,15 @@ const DEFAULT_DATES = {
   final: "2027-05-03"    // May/June exam series
 };
 const CD_META = [
-  { key: "ielts", label: "IELTS",       colour: "#ffd166" },
-  { key: "mock",  label: "Mock 1",      colour: "#ff8a4f" },
-  { key: "final", label: "May/June",    colour: "#4f8cff" }
+  { key: "ielts", label: "IELTS",    colour: "var(--yellow)" },
+  { key: "mock",  label: "Mock 1",   colour: "var(--orange)" },
+  { key: "final", label: "May/June", colour: "var(--blue)"   }
 ];
 
-/* ---------- state ---------- */
+/* ---------------------------------------------------------------- state */
 let state = load();
-let activeTab = "overview";
+let tab = "home";
+let openChapters = new Set();
 
 function load() {
   try {
@@ -31,21 +33,22 @@ function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
 }
 
-const keyOf = (subj, ch, i) => `${subj}:${ch}:${i}`;
+const keyOf = (s, c, i) => `${s}:${c}:${i}`;
 const mark = k => state.marks[k] || { l: false, r: false };
+const el = document.getElementById.bind(document);
+const esc = s => String(s).replace(/[&<>"]/g,
+  c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-/* ---------- theme ---------- */
+/* ---------------------------------------------------------------- theme */
 function applyTheme() {
   const t = state.theme || "auto";
   const root = document.documentElement;
-  if (t === "auto") delete root.dataset.theme;
-  else root.dataset.theme = t;
+  if (t === "auto") delete root.dataset.theme; else root.dataset.theme = t;
 
-  // Keep the browser chrome in step with what is actually on screen.
   const dark = t === "dark" ||
     (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#0e1116" : "#f5f7fb";
+  if (meta) meta.content = dark ? "#000000" : "#EFEFF4";
 
   document.querySelectorAll("[data-theme-set]").forEach(b =>
     b.setAttribute("aria-pressed", b.dataset.themeSet === t));
@@ -53,191 +56,341 @@ function applyTheme() {
 matchMedia("(prefers-color-scheme: dark)")
   .addEventListener("change", () => { if ((state.theme || "auto") === "auto") applyTheme(); });
 
-/* ---------- dates ---------- */
-function midnight(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
+/* ---------------------------------------------------------------- dates */
+const midnight = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
 function daysUntil(iso) {
   if (!iso) return null;
-  const target = midnight(iso + "T00:00:00");
-  if (isNaN(target)) return null;
-  return Math.round((target - midnight(new Date())) / 86400000);
+  const t = midnight(iso + "T00:00:00");
+  return isNaN(t) ? null : Math.round((t - midnight(new Date())) / 86400000);
 }
 const fmtDate = iso => new Date(iso + "T00:00:00")
   .toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
 
-/* ---------- progress ---------- */
+/* ------------------------------------------------------------- progress */
 function subjectStats(subj) {
   let total = 0, learnt = 0, revised = 0, chapters = 0, chaptersDone = 0;
   for (const g of subj.groups) for (const ch of g.chapters) {
     chapters++;
-    let chDone = 0;
+    let done = 0;
     ch.subs.forEach((_, i) => {
       total++;
       const m = mark(keyOf(subj.id, ch.n, i));
-      if (m.l) { learnt++; chDone++; }
+      if (m.l) { learnt++; done++; }
       if (m.r) revised++;
     });
-    if (chDone === ch.subs.length) chaptersDone++;
+    if (done === ch.subs.length) chaptersDone++;
   }
-  return { total, learnt, revised, chapters, chaptersDone, pct: total ? Math.round(learnt / total * 100) : 0 };
+  return { total, learnt, revised, chapters, chaptersDone,
+           pct: total ? Math.round(learnt / total * 100) : 0 };
 }
-function overallStats() {
-  return SYLLABUS.reduce((a, s) => {
-    const st = subjectStats(s);
-    a.total += st.total; a.learnt += st.learnt; a.revised += st.revised;
-    a.chapters += st.chapters; a.chaptersDone += st.chaptersDone;
-    return a;
-  }, { total: 0, learnt: 0, revised: 0, chapters: 0, chaptersDone: 0 });
-}
+const overall = () => SYLLABUS.reduce((a, s) => {
+  const st = subjectStats(s);
+  a.total += st.total; a.learnt += st.learnt; a.revised += st.revised;
+  a.chapters += st.chapters; a.chaptersDone += st.chaptersDone;
+  return a;
+}, { total: 0, learnt: 0, revised: 0, chapters: 0, chaptersDone: 0 });
 
-/* ---------- rendering ---------- */
-const el = document.getElementById.bind(document);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-
-function renderCountdowns() {
-  el("countdowns").innerHTML = CD_META.map(m => {
-    const iso = state.dates[m.key];
-    const d = daysUntil(iso);
-    const past = d !== null && d < 0;
-    const num = d === null ? "—" : (past ? "done" : d);
-    const unit = (d === null || past) ? "" : `<small>${d === 1 ? "day" : "days"} left</small>`;
-    return `<div class="cd ${past ? "past" : ""}" style="--c:${m.colour}">
+/* ------------------------------------------------------------ fragments */
+function countdownStrip() {
+  return `<div class="cds">` + CD_META.map(m => {
+    const iso = state.dates[m.key], d = daysUntil(iso), past = d !== null && d < 0;
+    return `<div class="cd glass ${past ? "past" : ""}" style="--c:${m.colour}">
       <div class="lab">${m.label}</div>
-      <div class="num">${num}${unit}</div>
-      <div class="date">${iso ? fmtDate(iso) : "not set"}</div>
+      <div class="num">${d === null ? "—" : past ? "✓" : d}</div>
+      <div class="unit">${d === null ? "no date" : past ? "done" : d === 1 ? "day left" : "days left"}</div>
+      <div class="date">${iso ? fmtDate(iso) : ""}</div>
     </div>`;
-  }).join("");
+  }).join("") + `</div>`;
 }
 
-function renderTabs() {
-  const tabs = [{ id: "overview", name: "Overview" }].concat(SYLLABUS);
-  el("tabs").innerHTML = tabs.map(t => {
-    const pct = t.id === "overview" ? "" :
-      `<span class="pct">${subjectStats(t).pct}%</span>`;
-    return `<button class="tab" role="tab" data-tab="${t.id}"
-      aria-selected="${activeTab === t.id}">${esc(t.name)}${pct}</button>`;
-  }).join("");
+function ring(pct, colour = "var(--blue)") {
+  const R = 40, C = 2 * Math.PI * R;
+  return `<div class="ring">
+    <svg viewBox="0 0 92 92">
+      <circle class="trk" cx="46" cy="46" r="${R}"/>
+      <circle class="val" cx="46" cy="46" r="${R}" style="stroke:${colour};
+        stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/>
+    </svg><b>${pct}%</b></div>`;
 }
 
-function renderOverview() {
-  const o = overallStats();
-  const left = o.total - o.learnt;
-  const dMock = daysUntil(state.dates.mock);
-  const dFinal = daysUntil(state.dates.final);
-  const pace = (n, d) => (d && d > 0 && n > 0) ? (n / d).toFixed(1) : (n === 0 ? "0" : "—");
+const initials = s => s.short || s.name.slice(0, 2).toUpperCase();
 
-  const stats = `<div class="stats">
-    <div class="stat"><div class="k">Topics done</div><div class="v">${o.learnt}<span class="sub"> / ${o.total}</span></div></div>
-    <div class="stat"><div class="k">Chapters done</div><div class="v">${o.chaptersDone}<span class="sub"> / ${o.chapters}</span></div></div>
-    <div class="stat"><div class="k">Revised</div><div class="v">${o.revised}</div></div>
-    <div class="stat"><div class="k">Topics left</div><div class="v">${left}</div></div>
-    <div class="stat"><div class="k">Pace to Mock 1</div><div class="v">${pace(left, dMock)}<span class="sub"> /day</span></div></div>
-    <div class="stat"><div class="k">Pace to May/June</div><div class="v">${pace(left, dFinal)}<span class="sub"> /day</span></div></div>
-  </div>`;
-
-  const cards = SYLLABUS.map(s => {
+function subjectRows() {
+  return `<div class="list glass">` + SYLLABUS.map(s => {
     const st = subjectStats(s);
-    return `<div class="card">
-      <div class="subjrow"><b>${esc(s.name)}</b><span class="v" style="color:${s.colour}">${st.pct}%</span></div>
-      <div class="sub">${esc(s.code)} · ${st.chaptersDone}/${st.chapters} chapters · ${st.learnt}/${st.total} topics · ${st.revised} revised</div>
-      <div class="bar" style="--c:${s.colour}"><i style="width:${st.pct}%"></i></div>
-    </div>`;
-  }).join("");
-
-  return stats + `<div class="grouphdr">By subject</div>` + cards;
+    return `<button class="row" data-open="${s.id}" style="--c:${s.colour}">
+      <span class="tile">${initials(s)}</span>
+      <span class="row-main">
+        <b>${esc(s.name)}</b>
+        <span>${st.chaptersDone}/${st.chapters} chapters · ${st.total - st.learnt} topics left</span>
+        <span class="minibar"><i style="width:${st.pct}%"></i></span>
+      </span>
+      <span class="badge">${st.pct}%</span>
+      <svg class="ico chev"><use href="#i-chevron"/></svg>
+    </button>`;
+  }).join("") + `</div>`;
 }
 
-function renderSubject(subj) {
-  const st = subjectStats(subj);
-  let html = `<div class="card" style="--c:${subj.colour}">
-      <div class="subjrow"><b>${esc(subj.name)}</b><span class="v" style="color:${subj.colour}">${st.pct}%</span></div>
-      <div class="sub">${esc(subj.code)} · ${st.chaptersDone}/${st.chapters} chapters complete · ${st.total - st.learnt} topics left</div>
-      <div class="bar"><i style="width:${st.pct}%"></i></div>
+/* ------------------------------------------------------------- screens */
+function screenHome() {
+  const o = overall();
+  const left = o.total - o.learnt;
+  const pct = o.total ? Math.round(o.learnt / o.total * 100) : 0;
+  const dMock = daysUntil(state.dates.mock);
+  const pace = (dMock && dMock > 0 && left > 0) ? (left / dMock).toFixed(1) : "0";
+
+  return `<div class="screen-in">
+    <h1 class="large-title">Study</h1>
+    <p class="large-sub">${new Date().toLocaleDateString(undefined,
+      { weekday: "long", day: "numeric", month: "long" })}</p>
+  </div>
+  ${countdownStrip()}
+  <div class="screen-in">
+    <div class="hero glass">
+      ${ring(pct)}
+      <div class="hero-txt">
+        <h2>${o.learnt} of ${o.total}</h2>
+        <p>topics learnt · ${o.revised} revised</p>
+        <div class="pace"><b>${pace}</b><span>a day to finish by Mock 1</span></div>
+      </div>
     </div>
-    <div class="legend">
-      <span><i class="sw" style="background:var(--good)"></i> ✓ learnt</span>
-      <span><i class="sw" style="background:var(--warn)"></i> ★ revised</span>
+    <div class="sec-hdr">Subjects</div>
+    ${subjectRows()}
+    <p class="note">Tap a subject to tick off chapters. Everything is stored on this
+      phone and works with no signal.</p>
+  </div>`;
+}
+
+function screenSubjects() {
+  const o = overall();
+  return `<div class="screen-in">
+    <h1 class="large-title">Subjects</h1>
+    <p class="large-sub">${o.chaptersDone} of ${o.chapters} chapters complete</p>
+    <div class="sec-hdr">All subjects</div>
+    ${subjectRows()}
+  </div>`;
+}
+
+function screenSubject(subj) {
+  const st = subjectStats(subj);
+  let html = `<div class="screen-in">
+    <h1 class="large-title">${esc(subj.name)}</h1>
+    <p class="large-sub">${esc(subj.code)}</p>
+    <div class="hero glass" style="--c:${subj.colour}">
+      ${ring(st.pct, subj.colour)}
+      <div class="hero-txt">
+        <h2>${st.learnt} of ${st.total}</h2>
+        <p>learnt · ${st.chaptersDone}/${st.chapters} chapters</p>
+        <div class="pace"><b>${st.revised}</b><span>revised</span></div>
+      </div>
     </div>`;
 
   for (const g of subj.groups) {
-    html += `<div class="grouphdr">${esc(g.name)}</div>`;
+    html += `<div class="sec-hdr">${esc(g.name)}</div><div class="list glass">`;
     for (const ch of g.chapters) {
-      const marks = ch.subs.map((_, i) => mark(keyOf(subj.id, ch.n, i)));
-      const done = marks.filter(m => m.l).length;
-      const rev = marks.filter(m => m.r).length;
+      const id = `${subj.id}:${ch.n}`;
+      const ms = ch.subs.map((_, i) => mark(keyOf(subj.id, ch.n, i)));
+      const done = ms.filter(m => m.l).length;
       const all = done === ch.subs.length;
-      const chip = all ? `<span class="chip done">done</span>`
-        : done ? `<span class="chip prog">${done}/${ch.subs.length}</span>`
-        : `<span class="chip">${ch.subs.length} topic${ch.subs.length === 1 ? "" : "s"}</span>`;
+      const open = openChapters.has(id);
 
-      html += `<details class="ch ${all ? "done" : ""}" style="--c:${subj.colour}" data-ch="${esc(ch.n)}">
-        <summary>
-          <span class="chno">${esc(ch.n)}</span>
-          <span class="chmeta"><b>${esc(ch.t)}</b>
-            <span>${done}/${ch.subs.length} learnt${rev ? ` · ${rev} revised` : ""}</span></span>
-          ${chip}
-        </summary>
-        <div class="subs">` +
+      html += `<div class="ch ${all ? "done" : ""} ${open ? "open" : ""}"
+                    style="--c:${subj.colour}" data-ch="${esc(id)}">
+        <button class="row ch-head" data-toggle="${esc(id)}">
+          <span class="num">${esc(ch.n)}</span>
+          <span class="row-main">
+            <b>${esc(ch.t)}</b>
+            <span>${done}/${ch.subs.length} learnt</span>
+          </span>
+          <svg class="ico chev"><use href="#i-chevron"/></svg>
+        </button>
+        <div class="ch-body">` +
         ch.subs.map((s, i) => {
-          const m = marks[i];
-          const k = keyOf(subj.id, ch.n, i);
-          return `<div class="subitem ${m.l ? "learnt" : ""}">
+          const k = keyOf(subj.id, ch.n, i), m = ms[i];
+          return `<div class="topic ${m.l ? "learnt" : ""}">
+            <button class="tick" data-k="${k}" data-f="l" aria-pressed="${m.l}"
+              aria-label="Learnt"><svg class="ico"><use href="#i-check"/></svg></button>
             <p>${esc(s)}</p>
-            <button class="tg l" data-k="${k}" data-f="l" aria-pressed="${m.l}" title="Learnt">✓</button>
-            <button class="tg r" data-k="${k}" data-f="r" aria-pressed="${m.r}" title="Revised">★</button>
+            <button class="star" data-k="${k}" data-f="r" aria-pressed="${m.r}"
+              aria-label="Revised"><svg class="ico"><use href="#i-star"/></svg></button>
           </div>`;
         }).join("") +
-        `</div>
-        <div class="chactions">
-          <button data-bulk="l" data-subj="${subj.id}" data-chn="${esc(ch.n)}">Mark all learnt</button>
-          <button data-bulk="r" data-subj="${subj.id}" data-chn="${esc(ch.n)}">Mark all revised</button>
-          <button data-bulk="clear" data-subj="${subj.id}" data-chn="${esc(ch.n)}">Clear</button>
-        </div>
-      </details>`;
+        `<div class="ch-acts">
+          <button data-bulk="l" data-subj="${subj.id}" data-chn="${esc(ch.n)}">All learnt</button>
+          <button data-bulk="r" data-subj="${subj.id}" data-chn="${esc(ch.n)}">All revised</button>
+          <button class="warn" data-bulk="clear" data-subj="${subj.id}" data-chn="${esc(ch.n)}">Clear</button>
+        </div></div>
+      </div>`;
     }
+    html += `</div>`;
   }
-  return html;
+  return html + `</div>`;
 }
 
-function render(keepOpen = true) {
-  const open = keepOpen ? [...document.querySelectorAll("details.ch[open]")].map(d => d.dataset.ch) : [];
-  const scroll = window.scrollY;
+function screenSettings() {
+  const dateRow = (k, label) => `<div class="row">
+      <span class="row-main"><b>${label}</b></span>
+      <input type="date" data-date="${k}" value="${state.dates[k] || ""}">
+    </div>`;
+  return `<div class="screen-in">
+    <h1 class="large-title">Settings</h1>
 
-  el("todayLine").textContent = new Date()
-    .toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "long", year: "numeric" });
-  renderCountdowns();
-  renderTabs();
+    <div class="sec-hdr">Appearance</div>
+    <div class="seg">
+      <button data-theme-set="auto">Auto</button>
+      <button data-theme-set="light">Light</button>
+      <button data-theme-set="dark">Dark</button>
+    </div>
 
-  const subj = SYLLABUS.find(s => s.id === activeTab);
-  el("view").innerHTML = subj ? renderSubject(subj) : renderOverview();
+    <div class="sec-hdr">Exam dates</div>
+    <div class="list glass">
+      ${dateRow("ielts", "IELTS")}
+      ${dateRow("mock", "Mock 1")}
+      ${dateRow("final", "May/June")}
+    </div>
 
-  open.forEach(n => {
-    const d = document.querySelector(`details.ch[data-ch="${CSS.escape(n)}"]`);
-    if (d) d.open = true;
-  });
-  window.scrollTo(0, scroll);
+    <div class="sec-hdr">Your data</div>
+    <div class="list glass">
+      <button class="act-row" id="exportBtn">Export backup</button>
+      <button class="act-row" id="importBtn">Import backup</button>
+      <button class="act-row danger" id="resetBtn">Reset all progress</button>
+    </div>
+    <p class="note">Progress lives on this phone only. Export a backup before you
+      clear Safari's data, or to move it to another device.</p>
+  </div>`;
 }
 
-/* ---------- interactions ---------- */
+/* ------------------------------------------------------------ rendering */
+const TITLES = { home: "Study", subjects: "Subjects", settings: "Settings" };
+let current = null;          // the live .screen element
+let currentSubject = null;   // subject id when a detail screen is on top
+
+function bodyFor(view) {
+  if (view === "home") return screenHome();
+  if (view === "subjects") return screenSubjects();
+  if (view === "settings") return screenSettings();
+  return screenSubject(SYLLABUS.find(s => s.id === view));
+}
+function titleFor(view) {
+  return TITLES[view] || (SYLLABUS.find(s => s.id === view) || {}).name || "";
+}
+
+function makeScreen(view) {
+  const s = document.createElement("section");
+  s.className = "screen";
+  s.dataset.view = view;
+  s.innerHTML = bodyFor(view);
+  s.addEventListener("scroll", () => { if (s === current) syncNav(); }, { passive: true });
+  return s;
+}
+
+function syncNav() {
+  el("nav").classList.toggle("solid", !!current && current.scrollTop > 24);
+  el("navCompact").textContent = titleFor(current ? current.dataset.view : tab);
+}
+
+/* Replace the visible screen with no animation (tab switches). */
+function show(view) {
+  const s = makeScreen(view);
+  el("stack").replaceChildren(s);
+  current = s;
+  currentSubject = null;
+  el("backBtn").hidden = true;
+  applyTheme();
+  syncNav();
+}
+
+/* Slide a subject detail in over the current screen. */
+function push(subjectId) {
+  const from = current;
+  const s = makeScreen(subjectId);
+  s.classList.add("push-enter");
+  el("stack").appendChild(s);
+  current = s;
+  currentSubject = subjectId;
+
+  el("backLabel").textContent = titleFor(from ? from.dataset.view : "subjects");
+  el("backBtn").hidden = false;
+  applyTheme();
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    s.classList.add("push-active", "push-done");
+    if (from) { from.classList.add("push-active", "push-behind"); }
+    setTimeout(() => { if (from && from.parentNode) from.remove(); syncNav(); }, 440);
+  }));
+  syncNav();
+}
+
+function pop() {
+  if (!currentSubject) return;
+  const leaving = current;
+  const s = makeScreen(tab);
+  s.classList.add("push-active", "push-behind");
+  el("stack").insertBefore(s, leaving);
+  current = s;
+  currentSubject = null;
+  el("backBtn").hidden = true;
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    s.classList.remove("push-behind");
+    leaving.classList.add("push-active");
+    leaving.classList.remove("push-done");
+    leaving.classList.add("push-enter");
+    setTimeout(() => { if (leaving.parentNode) leaving.remove(); syncNav(); }, 440);
+  }));
+  applyTheme();
+  syncNav();
+}
+
+/* Re-render in place, preserving scroll — used after every tick. */
+function refresh() {
+  if (!current) return;
+  const y = current.scrollTop;
+  current.innerHTML = bodyFor(current.dataset.view);
+  current.scrollTop = y;
+  applyTheme();
+  syncNav();
+}
+
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll(".tabbtn").forEach(b =>
+    b.setAttribute("aria-selected", b.dataset.go === t));
+  show(t);
+}
+
+/* --------------------------------------------------------- interactions */
 document.addEventListener("click", e => {
-  const tab = e.target.closest(".tab");
-  if (tab) { activeTab = tab.dataset.tab; render(false); window.scrollTo(0, 0); return; }
+  const t = e.target.closest.bind(e.target);
 
-  const tg = e.target.closest(".tg");
-  if (tg) {
-    const k = tg.dataset.k, f = tg.dataset.f;
-    const m = { ...mark(k) };
-    m[f] = !m[f];
-    if (f === "r" && m.r) m.l = true;      // revising implies you've learnt it
-    if (f === "l" && !m.l) m.r = false;    // un-learning clears the revised star
-    state.marks[k] = m;
-    save(); render();
+  const tabBtn = t("[data-go]");
+  if (tabBtn) { setTab(tabBtn.dataset.go); return; }
+
+  if (t("#backBtn")) { pop(); return; }
+
+  const open = t("[data-open]");
+  if (open) { push(open.dataset.open); return; }
+
+  const toggle = t("[data-toggle]");
+  if (toggle) {
+    const id = toggle.dataset.toggle;
+    openChapters.has(id) ? openChapters.delete(id) : openChapters.add(id);
+    toggle.closest(".ch").classList.toggle("open");
     return;
   }
 
-  const th = e.target.closest("[data-theme-set]");
-  if (th) { state.theme = th.dataset.themeSet; save(); applyTheme(); return; }
+  const tick = t("[data-k]");
+  if (tick) {
+    const k = tick.dataset.k, f = tick.dataset.f, m = { ...mark(k) };
+    m[f] = !m[f];
+    if (f === "r" && m.r) m.l = true;     // revising implies learnt
+    if (f === "l" && !m.l) m.r = false;   // un-learning clears the star
+    state.marks[k] = m;
+    save(); refresh();
+    return;
+  }
 
-  const bulk = e.target.closest("[data-bulk]");
+  const bulk = t("[data-bulk]");
   if (bulk) {
     const { bulk: mode, subj: sid, chn } = bulk.dataset;
     const s = SYLLABUS.find(x => x.id === sid);
@@ -248,43 +401,41 @@ document.addEventListener("click", e => {
       else if (mode === "l") state.marks[k] = { ...mark(k), l: true };
       else state.marks[k] = { l: true, r: true };
     });
-    save(); render();
+    save(); refresh();
+    return;
   }
+
+  const th = t("[data-theme-set]");
+  if (th) { state.theme = th.dataset.themeSet; save(); applyTheme(); return; }
+
+  if (t("#exportBtn")) return doExport();
+  if (t("#importBtn")) return el("importFile").click();
+  if (t("#resetBtn")) return doReset();
 });
 
-/* ---------- settings ---------- */
-const dlg = el("settings");
-function syncDateInputs() {
-  el("d_ielts").value = state.dates.ielts;
-  el("d_mock").value = state.dates.mock;
-  el("d_final").value = state.dates.final;
-}
-el("menuBtn").onclick = () => { syncDateInputs(); dlg.showModal(); };
-dlg.addEventListener("close", () => {
-  state.dates = {
-    ielts: el("d_ielts").value || DEFAULT_DATES.ielts,
-    mock:  el("d_mock").value  || DEFAULT_DATES.mock,
-    final: el("d_final").value || DEFAULT_DATES.final
-  };
-  save(); render();
+document.addEventListener("change", e => {
+  const d = e.target.closest("[data-date]");
+  if (!d) return;
+  state.dates[d.dataset.date] = d.value || DEFAULT_DATES[d.dataset.date];
+  save();
 });
 
+/* ----------------------------------------------------------- data files */
 function toast(msg) {
-  const t = document.createElement("div");
-  t.className = "toast"; t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
+  const n = document.createElement("div");
+  n.className = "toast"; n.textContent = msg;
+  document.body.appendChild(n);
+  requestAnimationFrame(() => n.classList.add("show"));
+  setTimeout(() => { n.classList.remove("show"); setTimeout(() => n.remove(), 400); }, 2000);
 }
-
-el("exportBtn").onclick = () => {
+function doExport() {
   const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = `study-tracker-${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = `study-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
   URL.revokeObjectURL(a.href);
-};
-el("importBtn").onclick = () => el("importFile").click();
+}
 el("importFile").onchange = async e => {
   const f = e.target.files[0];
   if (!f) return;
@@ -296,34 +447,23 @@ el("importFile").onchange = async e => {
       marks: data.marks,
       theme: data.theme || state.theme || "auto"
     };
-    save(); syncDateInputs(); applyTheme(); render(false); toast("Backup restored");
+    save(); refresh(); toast("Backup restored");
   } catch (err) { toast("Could not read that file"); }
   e.target.value = "";
 };
-el("resetBtn").onclick = () => {
+function doReset() {
   if (!confirm("Clear all ticks and reset dates? This cannot be undone.")) return;
   state = { dates: { ...DEFAULT_DATES }, marks: {}, theme: state.theme || "auto" };
-  save(); syncDateInputs(); applyTheme(); render(false); toast("Progress reset");
-};
+  openChapters.clear();
+  save(); refresh(); toast("Progress reset");
+}
 
-/* ---------- PWA ---------- */
-let deferredPrompt = null;
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault(); deferredPrompt = e; el("installBtn").hidden = false;
-});
-el("installBtn").onclick = async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  await deferredPrompt.userChoice;
-  deferredPrompt = null; el("installBtn").hidden = true;
-};
+/* ------------------------------------------------------------------ PWA */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-
-/* keep the countdowns honest if the app is left open overnight */
-document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
-setInterval(renderCountdowns, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+setInterval(() => { if (current && current.dataset.view === "home") refresh(); }, 60000);
 
 applyTheme();
-render(false);
+setTab("home");

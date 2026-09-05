@@ -2,74 +2,73 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Study Tracker</title>
-<meta name="description" content="A Level + IELTS chapter tracker with exam countdowns. Works offline.">
-<meta name="theme-color" content="#0e1116">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<title>Study</title>
+<meta name="description" content="A Level and IELTS revision tracker with exam countdowns. Works offline.">
+<meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Study">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="stylesheet" href="styles.css">
 <script>
-  /* Apply the saved theme before first paint so a dark user never sees a white flash. */
+  /* Paint in the right theme from the very first frame. */
   try {
     var t = JSON.parse(localStorage.getItem("study-tracker-v1") || "{}").theme;
     if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
   } catch (e) {}
 </script>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header class="topbar">
-  <div class="brand">
-    <span class="dot"></span>
-    <div>
-      <h1>Study Tracker</h1>
-      <p id="todayLine">—</p>
-    </div>
-  </div>
-  <div class="topbar-actions">
-    <button id="installBtn" class="ghost" hidden>Install</button>
-    <button id="menuBtn" class="ghost" aria-label="Settings">⚙</button>
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24">
+    <path d="M3 10.9 12 3.6l9 7.3M5.8 9.6v9.9a1.5 1.5 0 0 0 1.5 1.5h2.9v-5.6h3.6V21h2.9a1.5 1.5 0 0 0 1.5-1.5V9.6"/>
+  </symbol>
+  <symbol id="i-books" viewBox="0 0 24 24">
+    <path d="M4 5.5h16M4 12h16M4 18.5h16"/>
+  </symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3.1"/>
+    <path d="M19.1 13.4a1.5 1.5 0 0 0 .3 1.65l.05.05a1.85 1.85 0 1 1-2.6 2.6l-.05-.05a1.5 1.5 0 0 0-1.65-.3 1.5 1.5 0 0 0-.9 1.37v.13a1.85 1.85 0 1 1-3.7 0v-.07a1.5 1.5 0 0 0-.98-1.37 1.5 1.5 0 0 0-1.65.3l-.05.05a1.85 1.85 0 1 1-2.6-2.6l.05-.05a1.5 1.5 0 0 0 .3-1.65 1.5 1.5 0 0 0-1.37-.9h-.13a1.85 1.85 0 1 1 0-3.7h.07a1.5 1.5 0 0 0 1.37-.98 1.5 1.5 0 0 0-.3-1.65l-.05-.05a1.85 1.85 0 1 1 2.6-2.6l.05.05a1.5 1.5 0 0 0 1.65.3h.07a1.5 1.5 0 0 0 .9-1.37v-.13a1.85 1.85 0 1 1 3.7 0v.07a1.5 1.5 0 0 0 .9 1.37 1.5 1.5 0 0 0 1.65-.3l.05-.05a1.85 1.85 0 1 1 2.6 2.6l-.05.05a1.5 1.5 0 0 0-.3 1.65v.07a1.5 1.5 0 0 0 1.37.9h.13a1.85 1.85 0 1 1 0 3.7h-.07a1.5 1.5 0 0 0-1.37.9z"/>
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9.5 5.5 7 6.5-7 6.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.5 5.5-7 6.5 7 6.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5.5 12.6 4.4 4.4L18.6 8"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24">
+    <path d="m12 3.6 2.6 5.3 5.8.85-4.2 4.1 1 5.78L12 16.9l-5.2 2.73 1-5.78-4.2-4.1 5.8-.85z"/>
+  </symbol>
+</svg>
+
+<div class="bg" aria-hidden="true"></div>
+
+<header class="nav" id="nav">
+  <div class="nav-bar">
+    <button class="nav-back" id="backBtn" hidden>
+      <svg class="ico"><use href="#i-back"/></svg><span id="backLabel">Back</span>
+    </button>
+    <div class="nav-compact" id="navCompact"></div>
   </div>
 </header>
 
-<section class="countdowns" id="countdowns"></section>
+<div class="stack" id="stack"></div>
 
-<nav class="tabs" id="tabs"></nav>
+<nav class="tabbar" id="tabbar">
+  <button class="tabbtn" data-go="home">
+    <svg class="ico"><use href="#i-home"/></svg><span>Home</span>
+  </button>
+  <button class="tabbtn" data-go="subjects">
+    <svg class="ico"><use href="#i-books"/></svg><span>Subjects</span>
+  </button>
+  <button class="tabbtn" data-go="settings">
+    <svg class="ico"><use href="#i-gear"/></svg><span>Settings</span>
+  </button>
+</nav>
 
-<main id="view"></main>
-
-<dialog id="settings">
-  <form method="dialog">
-    <h2>Settings</h2>
-
-    <h3>Appearance</h3>
-    <div class="seg" id="themeSeg">
-      <button type="button" data-theme-set="auto">Auto</button>
-      <button type="button" data-theme-set="light">Light</button>
-      <button type="button" data-theme-set="dark">Dark</button>
-    </div>
-
-    <h3>Exam dates</h3>
-    <label>IELTS <input type="date" id="d_ielts"></label>
-    <label>Mock 1 <input type="date" id="d_mock"></label>
-    <label>May/June series <input type="date" id="d_final"></label>
-
-    <h3>Your data</h3>
-    <p class="hint">Progress is saved on this device only. Export a backup before clearing your browser.</p>
-    <div class="row">
-      <button type="button" id="exportBtn" class="ghost">Export backup</button>
-      <button type="button" id="importBtn" class="ghost">Import backup</button>
-    </div>
-    <button type="button" id="resetBtn" class="danger">Reset all progress</button>
-    <input type="file" id="importFile" accept="application/json" hidden>
-
-    <div class="row end"><button value="close" class="primary">Done</button></div>
-  </form>
-</dialog>
+<input type="file" id="importFile" accept="application/json" hidden>
 
 <script src="syllabus.js"></script>
 <script src="app.js"></script>
