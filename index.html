@@ -12,6 +12,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="styles.css">
+<script>
+  /* Apply the saved theme before first paint so a dark user never sees a white flash. */
+  try {
+    var t = JSON.parse(localStorage.getItem("study-tracker-v1") || "{}").theme;
+    if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+  } catch (e) {}
+</script>
 </head>
 <body>
 
@@ -38,6 +45,13 @@
 <dialog id="settings">
   <form method="dialog">
     <h2>Settings</h2>
+
+    <h3>Appearance</h3>
+    <div class="seg" id="themeSeg">
+      <button type="button" data-theme-set="auto">Auto</button>
+      <button type="button" data-theme-set="light">Light</button>
+      <button type="button" data-theme-set="dark">Dark</button>
+    </div>
 
     <h3>Exam dates</h3>
     <label>IELTS <input type="date" id="d_ielts"></label>

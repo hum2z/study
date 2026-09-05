@@ -19,9 +19,13 @@ let activeTab = "overview";
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORE));
-    if (raw && raw.marks) return { dates: { ...DEFAULT_DATES, ...(raw.dates || {}) }, marks: raw.marks };
+    if (raw && raw.marks) return {
+      dates: { ...DEFAULT_DATES, ...(raw.dates || {}) },
+      marks: raw.marks,
+      theme: raw.theme || "auto"
+    };
   } catch (e) { /* corrupt or unavailable — start fresh */ }
-  return { dates: { ...DEFAULT_DATES }, marks: {} };
+  return { dates: { ...DEFAULT_DATES }, marks: {}, theme: "auto" };
 }
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
@@ -29,6 +33,25 @@ function save() {
 
 const keyOf = (subj, ch, i) => `${subj}:${ch}:${i}`;
 const mark = k => state.marks[k] || { l: false, r: false };
+
+/* ---------- theme ---------- */
+function applyTheme() {
+  const t = state.theme || "auto";
+  const root = document.documentElement;
+  if (t === "auto") delete root.dataset.theme;
+  else root.dataset.theme = t;
+
+  // Keep the browser chrome in step with what is actually on screen.
+  const dark = t === "dark" ||
+    (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? "#0e1116" : "#f5f7fb";
+
+  document.querySelectorAll("[data-theme-set]").forEach(b =>
+    b.setAttribute("aria-pressed", b.dataset.themeSet === t));
+}
+matchMedia("(prefers-color-scheme: dark)")
+  .addEventListener("change", () => { if ((state.theme || "auto") === "auto") applyTheme(); });
 
 /* ---------- dates ---------- */
 function midnight(d) { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; }
@@ -211,6 +234,9 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const th = e.target.closest("[data-theme-set]");
+  if (th) { state.theme = th.dataset.themeSet; save(); applyTheme(); return; }
+
   const bulk = e.target.closest("[data-bulk]");
   if (bulk) {
     const { bulk: mode, subj: sid, chn } = bulk.dataset;
@@ -265,15 +291,19 @@ el("importFile").onchange = async e => {
   try {
     const data = JSON.parse(await f.text());
     if (!data.marks) throw new Error("bad file");
-    state = { dates: { ...DEFAULT_DATES, ...(data.dates || {}) }, marks: data.marks };
-    save(); syncDateInputs(); render(false); toast("Backup restored");
+    state = {
+      dates: { ...DEFAULT_DATES, ...(data.dates || {}) },
+      marks: data.marks,
+      theme: data.theme || state.theme || "auto"
+    };
+    save(); syncDateInputs(); applyTheme(); render(false); toast("Backup restored");
   } catch (err) { toast("Could not read that file"); }
   e.target.value = "";
 };
 el("resetBtn").onclick = () => {
   if (!confirm("Clear all ticks and reset dates? This cannot be undone.")) return;
-  state = { dates: { ...DEFAULT_DATES }, marks: {} };
-  save(); syncDateInputs(); render(false); toast("Progress reset");
+  state = { dates: { ...DEFAULT_DATES }, marks: {}, theme: state.theme || "auto" };
+  save(); syncDateInputs(); applyTheme(); render(false); toast("Progress reset");
 };
 
 /* ---------- PWA ---------- */
@@ -295,4 +325,5 @@ if ("serviceWorker" in navigator) {
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(renderCountdowns, 60000);
 
+applyTheme();
 render(false);

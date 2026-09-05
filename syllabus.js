@@ -39,23 +39,10 @@ const SYLLABUS = [
   {
     id: "phy",
     name: "Physics",
-    code: "Cambridge 9702",
+    code: "Cambridge 9702 · Year 2",
     colour: "#ff8a4f",
     groups: [
-      { name: "AS Level (Topics 1–11)", chapters: [
-        { n: "1", t: "Physical Quantities and Units", subs: ["1.1 Physical quantities", "1.2 SI units", "1.3 Errors and uncertainties", "1.4 Scalars and vectors"] },
-        { n: "2", t: "Kinematics", subs: ["2.1 Equations of motion"] },
-        { n: "3", t: "Dynamics", subs: ["3.1 Momentum and Newton's laws of motion", "3.2 Non-uniform motion", "3.3 Linear momentum and its conservation"] },
-        { n: "4", t: "Forces, Density and Pressure", subs: ["4.1 Turning effects of forces", "4.2 Equilibrium of forces", "4.3 Density and pressure"] },
-        { n: "5", t: "Work, Energy and Power", subs: ["5.1 Energy conservation", "5.2 Gravitational potential energy and kinetic energy"] },
-        { n: "6", t: "Deformation of Solids", subs: ["6.1 Stress and strain", "6.2 Elastic and plastic behaviour"] },
-        { n: "7", t: "Waves", subs: ["7.1 Progressive waves", "7.2 Transverse and longitudinal waves", "7.3 Doppler effect for sound waves", "7.4 Electromagnetic spectrum", "7.5 Polarisation"] },
-        { n: "8", t: "Superposition", subs: ["8.1 Stationary waves", "8.2 Diffraction", "8.3 Interference", "8.4 The diffraction grating"] },
-        { n: "9", t: "Electricity", subs: ["9.1 Electric current", "9.2 Potential difference and power", "9.3 Resistance and resistivity"] },
-        { n: "10", t: "D.C. Circuits", subs: ["10.1 Practical circuits", "10.2 Kirchhoff's laws", "10.3 Potential dividers"] },
-        { n: "11", t: "Particle Physics", subs: ["11.1 Atoms, nuclei and radiation", "11.2 Fundamental particles"] }
-      ]},
-      { name: "A Level (Topics 12–25)", chapters: [
+      { name: "Paper 4 — A Level topics", chapters: [
         { n: "12", t: "Motion in a Circle", subs: ["12.1 Kinematics of uniform circular motion", "12.2 Centripetal acceleration"] },
         { n: "13", t: "Gravitational Fields", subs: ["13.1 Gravitational field", "13.2 Gravitational force between point masses", "13.3 Gravitational field of a point mass", "13.4 Gravitational potential"] },
         { n: "14", t: "Temperature", subs: ["14.1 Thermal equilibrium", "14.2 Temperature scales", "14.3 Specific heat capacity and specific latent heat"] },
@@ -71,8 +58,19 @@ const SYLLABUS = [
         { n: "24", t: "Medical Physics", subs: ["24.1 Production and use of ultrasound", "24.2 Production and use of X-rays", "24.3 PET scanning"] },
         { n: "25", t: "Astronomy and Cosmology", subs: ["25.1 Standard candles", "25.2 Stellar radii", "25.3 Hubble's law and the Big Bang theory"] }
       ]},
-      { name: "Practical", chapters: [
-        { n: "P", t: "Practical Skills", subs: ["Paper 3 – Advanced Practical Skills", "Paper 5 – Planning, analysis and evaluation"] }
+      { name: "Paper 5 — Planning, analysis and evaluation", chapters: [
+        { n: "Q1", t: "Planning", subs: [
+          "Defining the problem — independent, dependent and controlled variables",
+          "Methods of data collection — how to vary and measure each variable",
+          "Method of analysis — what to plot and how the constant follows",
+          "Labelled diagram of a workable apparatus arrangement",
+          "Additional detail, including safety considerations"] },
+        { n: "Q2", t: "Analysis, Conclusions and Evaluation", subs: [
+          "Data analysis — rearranging the equation into y = mx + c",
+          "Table of results — calculated values and significant figures",
+          "Graph — plotting, error bars, best and worst-fit lines",
+          "Conclusion — gradient and intercept to find the constant",
+          "Treatment of uncertainties — absolute and percentage"] }
       ]}
     ]
   },

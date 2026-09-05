@@ -8,7 +8,7 @@ with live countdowns to each exam.
 | Subject | Board / spec | Content |
 |---|---|---|
 | Computer Science | Cambridge International 9618 | Sections 1–20 (AS + A Level) |
-| Physics | Cambridge International 9702 | Topics 1–25 + practical papers |
+| Physics | Cambridge International 9702 | Year 2 only — Paper 4 (topics 12–25) and Paper 5 |
 | Pure Maths 3 | Edexcel IAL WMA13 | Units 1–6 |
 | Pure Maths 4 | Edexcel IAL WMA14 | Units 1–7 |
 | Mechanics 1 | Edexcel IAL WME01 | Units 1–6 |
@@ -21,6 +21,17 @@ Every topic has two toggles:
 
 Chapters show `x/y` and flip to **done** when every topic is ticked. There are
 per-chapter "mark all" and "clear" buttons.
+
+Physics is scoped to the year 2 papers, so the AS topics 1–11 are not listed.
+Note that Paper 4 still assumes AS knowledge — add the earlier topics back in
+`syllabus.js` if you want them tracked.
+
+## Appearance
+
+**⚙ → Appearance** switches between Auto, Light and Dark. Auto follows the
+device setting and reacts if it changes while the app is open; Light and Dark
+override it. The choice is stored with your progress and applied before first
+paint, so a forced theme never flashes the wrong colours on load.
 
 ## Countdowns
 
