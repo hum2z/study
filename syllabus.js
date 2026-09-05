@@ -7,24 +7,10 @@ const SYLLABUS = [
   {
     id: "cs",
     name: "Computer Science",
-    code: "Cambridge 9618",
+    code: "Cambridge 9618 · Year 2",
     colour: "#4f8cff",
     groups: [
-      { name: "AS Level (Paper 1 & 2)", chapters: [
-        { n: "1", t: "Information Representation", subs: ["1.1 Data representation", "1.2 Multimedia – graphics, sound", "1.3 Compression"] },
-        { n: "2", t: "Communication", subs: ["2.1 Networks including the internet"] },
-        { n: "3", t: "Hardware", subs: ["3.1 Computers and their components", "3.2 Logic gates and logic circuits"] },
-        { n: "4", t: "Processor Fundamentals", subs: ["4.1 CPU architecture", "4.2 Assembly language", "4.3 Bit manipulation"] },
-        { n: "5", t: "System Software", subs: ["5.1 Operating systems", "5.2 Language translators"] },
-        { n: "6", t: "Security, Privacy and Data Integrity", subs: ["6.1 Data security", "6.2 Data integrity"] },
-        { n: "7", t: "Ethics and Ownership", subs: ["7.1 Ethics and ownership"] },
-        { n: "8", t: "Databases", subs: ["8.1 Database concepts", "8.2 Database management systems (DBMS)", "8.3 DDL and DML"] },
-        { n: "9", t: "Algorithm Design and Problem-solving", subs: ["9.1 Computational thinking skills", "9.2 Algorithms"] },
-        { n: "10", t: "Data Types and Structures", subs: ["10.1 Data types and records", "10.2 Arrays", "10.3 Files", "10.4 Introduction to abstract data types (ADT)"] },
-        { n: "11", t: "Programming", subs: ["11.1 Programming basics", "11.2 Constructs", "11.3 Structured programming"] },
-        { n: "12", t: "Software Development", subs: ["12.1 Program development life cycle", "12.2 Program design", "12.3 Program testing and maintenance"] }
-      ]},
-      { name: "A Level (Paper 3 & 4)", chapters: [
+      { name: "Paper 3 — Advanced Theory", chapters: [
         { n: "13", t: "Data Representation", subs: ["13.1 User-defined data types", "13.2 File organisation and access", "13.3 Floating-point numbers, representation and manipulation"] },
         { n: "14", t: "Communication and Internet Technologies", subs: ["14.1 Protocols", "14.2 Circuit switching, packet switching"] },
         { n: "15", t: "Hardware and Virtual Machines", subs: ["15.1 Processors, parallel processing and virtual machines", "15.2 Boolean algebra and logic circuits"] },
@@ -33,6 +19,16 @@ const SYLLABUS = [
         { n: "18", t: "Artificial Intelligence (AI)", subs: ["18.1 Artificial intelligence"] },
         { n: "19", t: "Computational Thinking and Problem-solving", subs: ["19.1 Algorithms", "19.2 Recursion"] },
         { n: "20", t: "Further Programming", subs: ["20.1 Programming paradigms", "20.2 File processing and exception handling"] }
+      ]},
+      { name: "Paper 4 — Practical (sections 19–20)", chapters: [
+        { n: "PR", t: "Practical Programming", subs: [
+          "Working fluently in one console language — Python, Java or VB",
+          "Implementing 19.1 algorithms — searching, sorting and ADTs in code",
+          "Recursion in code (19.2)",
+          "Object-oriented programming — classes, inheritance, polymorphism (20.1)",
+          "File processing — reading from and writing to files (20.2)",
+          "Exception handling (20.2)",
+          "Producing complete program code and evidence of testing"] }
       ]}
     ]
   },

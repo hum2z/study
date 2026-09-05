@@ -7,7 +7,7 @@ with live countdowns to each exam.
 
 | Subject | Board / spec | Content |
 |---|---|---|
-| Computer Science | Cambridge International 9618 | Sections 1–20 (AS + A Level) |
+| Computer Science | Cambridge International 9618 | Year 2 only — Paper 3 (sections 13–20) and Paper 4 |
 | Physics | Cambridge International 9702 | Year 2 only — Paper 4 (topics 12–25) and Paper 5 |
 | Pure Maths 3 | Edexcel IAL WMA13 | Units 1–6 |
 | Pure Maths 4 | Edexcel IAL WMA14 | Units 1–7 |
@@ -22,8 +22,9 @@ Every topic has two toggles:
 Chapters show `x/y` and flip to **done** when every topic is ticked. There are
 per-chapter "mark all" and "clear" buttons.
 
-Physics is scoped to the year 2 papers, so the AS topics 1–11 are not listed.
-Note that Paper 4 still assumes AS knowledge — add the earlier topics back in
+Both Cambridge subjects are scoped to the year 2 papers, so AS content is not
+listed: Physics starts at topic 12, Computer Science at section 13. The A2
+papers still assume that AS knowledge — add the earlier topics back in
 `syllabus.js` if you want them tracked.
 
 ## Appearance
