@@ -1,10 +1,8 @@
 /* Cache-first app shell so the tracker opens with no connection. */
-const CACHE = "study-tracker-v7";
+const CACHE = "study-tracker-v8";
 const ASSETS = [
   "./", "./index.html", "./styles.css", "./app.js", "./syllabus.js",
-  "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png",
-  "./fonts/poppins-500.woff2", "./fonts/poppins-600.woff2",
-  "./fonts/poppins-700.woff2", "./fonts/lora.woff2"
+  "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png"
 ];
 
 self.addEventListener("install", e => {

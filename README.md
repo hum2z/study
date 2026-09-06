@@ -1,13 +1,18 @@
-# Study Tracker
+# study
 
 An offline-first PWA for tracking A Level and IELTS revision, chapter by chapter,
 with live countdowns to each exam. Built for the iPhone: it installs to the home
-screen and is styled with Anthropic's brand system: warm paper surfaces,
-hairline borders, Poppins for chrome and Lora for reading text, with the brand
-orange as the accent.
+screen and is styled after the Claude Code CLI — one monospace stack, box-drawn
+panels, block-character progress bars, slash-command tabs and the brand orange
+on a warm off-black ground.
 
-Poppins and Lora are self-hosted in `fonts/` and precached by the service
-worker rather than pulled from Google at runtime, so the app looks the same
+Every screen opens with the command that "ran" to produce it (`> study status`,
+`> cd subjects/phy`) and hangs its summary off a `⎿` gutter, the way tool
+results do in the terminal. Dark is the default; light is the same terminal on
+paper.
+
+There are no webfonts to download — the UI uses the system monospace stack
+(SF Mono, Menlo, Consolas, and so on), so it renders instantly and identically
 with no connection.
 
 ## What's in it
@@ -23,11 +28,12 @@ with no connection.
 
 Every topic has two toggles:
 
-- **✓ learnt** — you've covered it
-- **★ revised** — you've been back over it (ticking this ticks "learnt" too)
+- **`[✓]` learnt** — you've covered it
+- **`★` revised** — you've been back over it (ticking this ticks "learnt" too)
 
-Chapters show `x/y` and flip to **done** when every topic is ticked. There are
-per-chapter "mark all" and "clear" buttons.
+Chapters show `x/y` and their title turns the subject's colour when every topic
+is ticked. Each open chapter ends with `--all-learnt`, `--all-revised` and
+`--clear` flags.
 
 Both Cambridge subjects are scoped to the year 2 papers, so AS content is not
 listed: Physics starts at topic 12, Computer Science at section 13. The A2
@@ -36,20 +42,20 @@ papers still assume that AS knowledge — add the earlier topics back in
 
 ## Getting around
 
-Three tabs at the bottom:
+Three slash commands along the bottom:
 
-- **Home** — countdowns, an overall progress ring, and the pace needed to finish
-- **Subjects** — every subject; tap one to push into its chapters
-- **Settings** — appearance, exam dates, backup and reset
+- **`/home`** — countdowns, overall progress and the pace needed to finish
+- **`/subjects`** — every subject; tap one to push into its chapters
+- **`/settings`** — theme, exam dates, backup and reset
 
-Inside a subject, tapping a chapter expands its topics in place. The large title
-collapses into the nav bar as you scroll, and content passes under the frosted
-bars the way it does in a native app.
+Inside a subject, tapping a chapter expands its topics in place. The top bar
+shows where you are as a path (`~/study/subjects/phy`) and `esc ←` pops back
+out.
 
-**⚙ → Appearance** switches between Auto, Light and Dark. Auto follows the
-device and reacts if it changes while the app is open. The choice is stored with
-your progress and applied before first paint, so a forced theme never flashes
-the wrong colours on load.
+**`/settings` → theme** switches between auto, light and dark. Auto follows the
+device — dark unless the system asks for light — and reacts if it changes while
+the app is open. The choice is stored with your progress and applied before
+first paint, so a forced theme never flashes the wrong colours on load.
 
 ## Countdowns
 
@@ -61,17 +67,17 @@ Three countdowns sit at the top, recalculated every minute and on app focus:
 | Mock 1 | 2 Nov 2026 (first Monday of November) |
 | May/June series | 3 May 2027 |
 
-Change any of them under **⚙ → Exam dates** — they're stored with your progress.
+Change any of them under **`/settings` → exam dates** — they're stored with your progress.
 
-The Overview tab turns these into a workload figure: topics left ÷ days left,
-so you can see the per-day pace needed for Mock 1 and for May/June.
+`/home` turns these into a workload figure: topics left ÷ days left, so you
+can see the per-day pace needed to clear the board before mock-1.
 
 ## Offline
 
 A service worker caches the whole app shell, so once you've opened it on a
 device it loads with no connection. Progress is kept in `localStorage` on that
-device — use **⚙ → Export backup** before clearing browser data, and
-**Import backup** to restore or move to another device.
+device — use **`/settings` → export backup** before clearing browser data, and
+**import backup** to restore or move to another device.
 
 ## Running it
 
@@ -99,8 +105,8 @@ old version indefinitely.
 ## Files
 
 ```
-index.html            markup and settings dialog
-styles.css            styling, light + dark
+index.html            shell: top bar, screen stack, tab bar
+styles.css            the CLI theme, dark + light
 syllabus.js           all syllabus data
 app.js                state, progress maths, rendering
 sw.js                 service worker (cache-first app shell)

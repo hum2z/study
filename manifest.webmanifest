@@ -1,13 +1,13 @@
 {
-  "name": "Study Tracker — A Level & IELTS",
-  "short_name": "Study",
+  "name": "study — A Level & IELTS",
+  "short_name": "study",
   "description": "Chapter-by-chapter tracker for Cambridge CS & Physics, Edexcel P3/P4/M1 and IELTS, with exam countdowns. Works offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#faf9f5",
-  "theme_color": "#faf9f5",
+  "background_color": "#1a1917",
+  "theme_color": "#1a1917",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

@@ -1,5 +1,5 @@
-/* Study — offline revision tracker.
-   Three tabs, with subject detail pushed on top of the Subjects tab. */
+/* study — offline revision tracker, dressed as a terminal.
+   Three slash-command tabs, with a subject detail pushed over /subjects. */
 
 const STORE = "study-tracker-v1";
 const DEFAULT_DATES = {
@@ -8,10 +8,19 @@ const DEFAULT_DATES = {
   final: "2027-05-03"    // May/June exam series
 };
 const CD_META = [
-  { key: "ielts", label: "IELTS",    colour: "var(--teal)"  },
-  { key: "mock",  label: "Mock 1",   colour: "var(--orange)" },
-  { key: "final", label: "May/June", colour: "var(--blue)"   }
+  { key: "ielts", label: "ielts",    colour: "var(--teal)"   },
+  { key: "mock",  label: "mock-1",   colour: "var(--accent)" },
+  { key: "final", label: "may-june", colour: "var(--blue)"   }
 ];
+
+/* Subject colours live in syllabus.js as hex. Map them onto theme variables
+   so they track light/dark instead of staying fixed. */
+const HUE = {
+  "#6a9bcc": "var(--blue)",  "#d97757": "var(--accent)",
+  "#788c5d": "var(--green)", "#9a7aa4": "var(--plum)",
+  "#bf9243": "var(--gold)",  "#5f938c": "var(--teal)"
+};
+const hue = s => HUE[String(s.colour).toLowerCase()] || "var(--accent)";
 
 /* ---------------------------------------------------------------- state */
 let state = load();
@@ -46,14 +55,14 @@ function applyTheme() {
   if (t === "auto") delete root.dataset.theme; else root.dataset.theme = t;
 
   const dark = t === "dark" ||
-    (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+    (t === "auto" && !matchMedia("(prefers-color-scheme: light)").matches);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#141413" : "#faf9f5";
+  if (meta) meta.content = dark ? "#1a1917" : "#faf9f5";
 
   document.querySelectorAll("[data-theme-set]").forEach(b =>
     b.setAttribute("aria-pressed", b.dataset.themeSet === t));
 }
-matchMedia("(prefers-color-scheme: dark)")
+matchMedia("(prefers-color-scheme: light)")
   .addEventListener("change", () => { if ((state.theme || "auto") === "auto") applyTheme(); });
 
 /* ---------------------------------------------------------------- dates */
@@ -63,8 +72,14 @@ function daysUntil(iso) {
   const t = midnight(iso + "T00:00:00");
   return isNaN(t) ? null : Math.round((t - midnight(new Date())) / 86400000);
 }
-const fmtDate = iso => new Date(iso + "T00:00:00")
-  .toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+/* Fixed 11-character date, so the countdown column never reflows on a
+   locale that spells things differently. */
+const MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+function fmtDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  if (isNaN(d)) return "";
+  return `${String(d.getDate()).padStart(2, "0")} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 /* ------------------------------------------------------------- progress */
 function subjectStats(subj) {
@@ -91,41 +106,42 @@ const overall = () => SYLLABUS.reduce((a, s) => {
 }, { total: 0, learnt: 0, revised: 0, chapters: 0, chaptersDone: 0 });
 
 /* ------------------------------------------------------------ fragments */
-function countdownStrip() {
-  return `<div class="cds">` + CD_META.map(m => {
+/* A progress bar drawn out of block characters, the way a CLI would. */
+function bar(pct, width = 24, colour = "var(--accent)", cls = "") {
+  const on = Math.round(width * Math.min(100, Math.max(0, pct)) / 100);
+  return `<span class="bar ${cls}" style="--c:${colour}"
+    ><b>${"█".repeat(on)}</b><i>${"░".repeat(width - on)}</i></span>`;
+}
+const cmd = (line, note = "") =>
+  `<div class="cmd"><i>&gt;</i><b>${esc(line)}</b>${note ? `<u>${esc(note)}</u>` : ""}</div>`;
+const out = text => `<div class="out">${text}</div>`;
+
+function countdownPanel() {
+  return `<div class="panel">` + CD_META.map(m => {
     const iso = state.dates[m.key], d = daysUntil(iso), past = d !== null && d < 0;
-    return `<div class="cd card ${past ? "past" : ""}" style="--c:${m.colour}">
-      <div class="lab">${m.label}</div>
-      <div class="num">${d === null ? "—" : past ? "✓" : d}</div>
-      <div class="unit">${d === null ? "no date" : past ? "done" : d === 1 ? "day left" : "days left"}</div>
-      <div class="date">${iso ? fmtDate(iso) : ""}</div>
+    const num = d === null ? "--" : past ? "done" : `${d}d`;
+    return `<div class="cd ${past ? "past" : ""}" style="--c:${m.colour}">
+      <span class="dot">${past ? "✔" : "●"}</span>
+      <span class="lab">${m.label}</span>
+      <span class="d">${num}</span>
+      <span class="when">${iso ? fmtDate(iso) : "unset"}</span>
     </div>`;
   }).join("") + `</div>`;
 }
 
-function ring(pct, colour = "var(--accent)") {
-  const R = 40, C = 2 * Math.PI * R;
-  return `<div class="ring">
-    <svg viewBox="0 0 92 92">
-      <circle class="trk" cx="46" cy="46" r="${R}"/>
-      <circle class="val" cx="46" cy="46" r="${R}" style="stroke:${colour};
-        stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct / 100)}"/>
-    </svg><b>${pct}%</b></div>`;
-}
-
-const initials = s => s.short || s.name.slice(0, 2).toUpperCase();
-
-function subjectRows() {
-  return `<div class="card">` + SYLLABUS.map(s => {
-    const st = subjectStats(s);
-    return `<button class="row" data-open="${s.id}" style="--c:${s.colour}">
-      <span class="tile tint">${initials(s)}</span>
+function subjectList() {
+  return `<div class="list">` + SYLLABUS.map(s => {
+    const st = subjectStats(s), c = hue(s);
+    return `<button class="row" data-open="${s.id}" style="--c:${c}">
+      <span class="caret">›</span>
       <span class="row-main">
         <b>${esc(s.name)}</b>
         <span>${st.chaptersDone}/${st.chapters} chapters · ${st.total - st.learnt} topics left</span>
       </span>
-      <span class="badge">${st.pct}%</span>
-      <svg class="ico chev"><use href="#i-chevron"/></svg>
+      <span class="right">
+        <span class="tag">${st.pct}%</span>
+        ${bar(st.pct, 8, c, "sm")}
+      </span>
     </button>`;
   }).join("") + `</div>`;
 }
@@ -137,55 +153,65 @@ function screenHome() {
   const pct = o.total ? Math.round(o.learnt / o.total * 100) : 0;
   const dMock = daysUntil(state.dates.mock);
   const pace = (dMock && dMock > 0 && left > 0) ? (left / dMock).toFixed(1) : "0";
+  const today = new Date().toLocaleDateString(undefined,
+    { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
   return `<div class="screen-in">
-    <h1 class="large-title">Study</h1>
-    <p class="large-sub">${new Date().toLocaleDateString(undefined,
-      { weekday: "long", day: "numeric", month: "long" })}</p>
-  </div>
-  ${countdownStrip()}
-  <div class="screen-in">
-    <div class="hero card">
-      ${ring(pct)}
-      <div class="hero-txt">
-        <h2>${o.learnt} of ${o.total}</h2>
-        <p>topics learnt · ${o.revised} revised</p>
-        <div class="pace"><b>${pace}</b><span>a day to finish by Mock 1</span></div>
+    ${cmd("study status")}
+    ${out(`${esc(today.toLowerCase())} · ${o.total} topics tracked across ${SYLLABUS.length} subjects`)}
+
+    <div class="sec">countdowns</div>
+    ${countdownPanel()}
+
+    <div class="sec">overall</div>
+    <div class="panel">
+      <div class="panel-hd">progress<em>${o.learnt}/${o.total} topics</em></div>
+      <div class="panel-b">
+        ${bar(pct, 24)}
+        <div class="stat"><b class="pct">${pct}%</b><span>learnt</span></div>
+        <div class="substat">${o.revised} revised · ${o.chaptersDone}/${o.chapters} chapters closed</div>
       </div>
     </div>
-    <div class="sec-hdr">Subjects</div>
-    ${subjectRows()}
-    <p class="note">Tap a subject to tick off chapters. Everything is stored on this
-      phone and works with no signal.</p>
+    ${out(left > 0
+      ? `${pace} topics/day to finish everything before mock-1`
+      : `nothing left — the whole board is ticked`)}
+
+    <div class="sec">subjects</div>
+    ${subjectList()}
+    <p class="hint">tap a subject to open its chapters. state lives in
+      <b>localStorage</b> on this device and works with no signal.</p>
   </div>`;
 }
 
 function screenSubjects() {
   const o = overall();
   return `<div class="screen-in">
-    <h1 class="large-title">Subjects</h1>
-    <p class="large-sub">${o.chaptersDone} of ${o.chapters} chapters complete</p>
-    <div class="sec-hdr">All subjects</div>
-    ${subjectRows()}
+    ${cmd("ls subjects")}
+    ${out(`${SYLLABUS.length} subjects · ${o.chaptersDone}/${o.chapters} chapters complete`)}
+    <div class="sec">all subjects</div>
+    ${subjectList()}
+    <p class="hint">chapters close automatically once every topic inside them is ticked.</p>
   </div>`;
 }
 
 function screenSubject(subj) {
-  const st = subjectStats(subj);
-  let html = `<div class="screen-in">
-    <h1 class="large-title">${esc(subj.name)}</h1>
-    <p class="large-sub">${esc(subj.code)}</p>
-    <div class="hero card" style="--c:${subj.colour}">
-      ${ring(st.pct, subj.colour)}
-      <div class="hero-txt">
-        <h2>${st.learnt} of ${st.total}</h2>
-        <p>learnt · ${st.chaptersDone}/${st.chapters} chapters</p>
-        <div class="pace"><b>${st.revised}</b><span>revised</span></div>
+  const st = subjectStats(subj), c = hue(subj);
+  let html = `<div class="screen-in" style="--c:${c}">
+    ${cmd(`cd subjects/${subj.id}`)}
+    ${out(esc(subj.name) + " · " + esc(subj.code))}
+
+    <div class="sec">progress</div>
+    <div class="panel">
+      <div class="panel-hd">${esc(subj.id)}<em>${st.learnt}/${st.total} topics</em></div>
+      <div class="panel-b">
+        ${bar(st.pct, 24, c)}
+        <div class="stat"><b class="pct" style="--c:${c}">${st.pct}%</b><span>learnt</span></div>
+        <div class="substat">${st.revised} revised · ${st.chaptersDone}/${st.chapters} chapters closed</div>
       </div>
     </div>`;
 
   for (const g of subj.groups) {
-    html += `<div class="sec-hdr">${esc(g.name)}</div><div class="card">`;
+    html += `<div class="sec">${esc(g.name.toLowerCase())}</div><div class="list">`;
     for (const ch of g.chapters) {
       const id = `${subj.id}:${ch.n}`;
       const ms = ch.subs.map((_, i) => mark(keyOf(subj.id, ch.n, i)));
@@ -194,73 +220,73 @@ function screenSubject(subj) {
       const open = openChapters.has(id);
 
       html += `<div class="ch ${all ? "done" : ""} ${open ? "open" : ""}"
-                    style="--c:${subj.colour}" data-ch="${esc(id)}">
+                    style="--c:${c}" data-ch="${esc(id)}">
         <button class="row ch-head" data-toggle="${esc(id)}">
-          <span class="num">${esc(ch.n)}</span>
-          <span class="row-main">
-            <b>${esc(ch.t)}</b>
-            <span>${done}/${ch.subs.length} learnt</span>
-          </span>
-          <svg class="ico chev"><use href="#i-chevron"/></svg>
+          <span class="caret">▸</span>
+          <span class="tag">[${esc(ch.n)}]</span>
+          <span class="row-main"><b>${esc(ch.t)}</b></span>
+          <span class="n">${done}/${ch.subs.length}</span>
         </button>
         <div class="ch-body">` +
         ch.subs.map((s, i) => {
           const k = keyOf(subj.id, ch.n, i), m = ms[i];
           return `<div class="topic ${m.l ? "learnt" : ""}">
             <button class="tick" data-k="${k}" data-f="l" aria-pressed="${m.l}"
-              aria-label="Learnt"><svg class="ico"><use href="#i-check"/></svg></button>
+              aria-label="Learnt">[${m.l ? "✓" : " "}]</button>
             <p>${esc(s)}</p>
             <button class="star" data-k="${k}" data-f="r" aria-pressed="${m.r}"
-              aria-label="Revised"><svg class="ico"><use href="#i-star"/></svg></button>
+              aria-label="Revised">${m.r ? "★" : "☆"}</button>
           </div>`;
         }).join("") +
         `<div class="ch-acts">
-          <button data-bulk="l" data-subj="${subj.id}" data-chn="${esc(ch.n)}">All learnt</button>
-          <button data-bulk="r" data-subj="${subj.id}" data-chn="${esc(ch.n)}">All revised</button>
-          <button class="warn" data-bulk="clear" data-subj="${subj.id}" data-chn="${esc(ch.n)}">Clear</button>
+          <button class="btn" data-bulk="l" data-subj="${subj.id}" data-chn="${esc(ch.n)}">--all-learnt</button>
+          <button class="btn" data-bulk="r" data-subj="${subj.id}" data-chn="${esc(ch.n)}">--all-revised</button>
+          <button class="btn warn" data-bulk="clear" data-subj="${subj.id}" data-chn="${esc(ch.n)}">--clear</button>
         </div></div>
       </div>`;
     }
     html += `</div>`;
   }
-  return html + `</div>`;
+  return html + `<p class="hint">[ ] learnt · ☆ revised — ticking revised marks it
+    learnt too.</p></div>`;
 }
 
 function screenSettings() {
-  const dateRow = (k, label) => `<div class="row plain">
+  const dateRow = (k, label) => `<div class="row">
       <span class="row-main"><b>${label}</b></span>
       <input type="date" data-date="${k}" value="${state.dates[k] || ""}">
     </div>`;
   return `<div class="screen-in">
-    <h1 class="large-title">Settings</h1>
+    ${cmd("study config")}
+    ${out("settings are saved alongside your progress")}
 
-    <div class="sec-hdr">Appearance</div>
+    <div class="sec">theme</div>
     <div class="seg">
-      <button data-theme-set="auto">Auto</button>
-      <button data-theme-set="light">Light</button>
-      <button data-theme-set="dark">Dark</button>
+      <button data-theme-set="auto">auto</button>
+      <button data-theme-set="light">light</button>
+      <button data-theme-set="dark">dark</button>
     </div>
 
-    <div class="sec-hdr">Exam dates</div>
-    <div class="card">
-      ${dateRow("ielts", "IELTS")}
-      ${dateRow("mock", "Mock 1")}
-      ${dateRow("final", "May/June")}
+    <div class="sec">exam dates</div>
+    <div class="list">
+      ${dateRow("ielts", "ielts")}
+      ${dateRow("mock", "mock-1")}
+      ${dateRow("final", "may-june")}
     </div>
 
-    <div class="sec-hdr">Your data</div>
-    <div class="card">
-      <button class="act-row" id="exportBtn">Export backup</button>
-      <button class="act-row" id="importBtn">Import backup</button>
-      <button class="act-row danger" id="resetBtn">Reset all progress</button>
+    <div class="sec">data</div>
+    <div class="list">
+      <button class="act-row" id="exportBtn">export backup</button>
+      <button class="act-row" id="importBtn">import backup</button>
+      <button class="act-row danger" id="resetBtn">reset all progress</button>
     </div>
-    <p class="note">Progress lives on this phone only. Export a backup before you
-      clear Safari's data, or to move it to another device.</p>
+    <p class="hint">progress is stored on this device only. export before you clear
+      browser data, or to move it to another phone.</p>
   </div>`;
 }
 
 /* ------------------------------------------------------------ rendering */
-const TITLES = { home: "Study", subjects: "Subjects", settings: "Settings" };
+const PATHS = { home: "~/study", subjects: "~/study/subjects", settings: "~/study/config" };
 let current = null;          // the live .screen element
 let currentSubject = null;   // subject id when a detail screen is on top
 
@@ -270,10 +296,10 @@ function bodyFor(view) {
   if (view === "settings") return screenSettings();
   return screenSubject(SYLLABUS.find(s => s.id === view));
 }
-function titleFor(view) {
-  return TITLES[view] || (SYLLABUS.find(s => s.id === view) || {}).name || "";
+function pathFor(view) {
+  if (PATHS[view]) return PATHS[view];
+  return SYLLABUS.some(s => s.id === view) ? `~/study/subjects/${view}` : "~/study";
 }
-
 function makeScreen(view) {
   const s = document.createElement("section");
   s.className = "screen";
@@ -284,8 +310,10 @@ function makeScreen(view) {
 }
 
 function syncNav() {
-  el("nav").classList.toggle("solid", !!current && current.scrollTop > 24);
-  el("navCompact").textContent = titleFor(current ? current.dataset.view : tab);
+  el("nav").classList.toggle("solid", !!current && current.scrollTop > 12);
+  const view = current ? current.dataset.view : tab;
+  const p = pathFor(view), cut = p.lastIndexOf("/");
+  el("navPath").innerHTML = esc(p.slice(0, cut + 1)) + `<b>${esc(p.slice(cut + 1))}</b>`;
 }
 
 /* Replace the visible screen with no animation (tab switches). */
@@ -308,14 +336,13 @@ function push(subjectId) {
   current = s;
   currentSubject = subjectId;
 
-  el("backLabel").textContent = titleFor(from ? from.dataset.view : "subjects");
   el("backBtn").hidden = false;
   applyTheme();
 
   requestAnimationFrame(() => requestAnimationFrame(() => {
     s.classList.add("push-active", "push-done");
     if (from) { from.classList.add("push-active", "push-behind"); }
-    setTimeout(() => { if (from && from.parentNode) from.remove(); syncNav(); }, 440);
+    setTimeout(() => { if (from && from.parentNode) from.remove(); syncNav(); }, 380);
   }));
   syncNav();
 }
@@ -335,7 +362,7 @@ function pop() {
     leaving.classList.add("push-active");
     leaving.classList.remove("push-done");
     leaving.classList.add("push-enter");
-    setTimeout(() => { if (leaving.parentNode) leaving.remove(); syncNav(); }, 440);
+    setTimeout(() => { if (leaving.parentNode) leaving.remove(); syncNav(); }, 380);
   }));
   applyTheme();
   syncNav();
@@ -446,15 +473,15 @@ el("importFile").onchange = async e => {
       marks: data.marks,
       theme: data.theme || state.theme || "auto"
     };
-    save(); refresh(); toast("Backup restored");
-  } catch (err) { toast("Could not read that file"); }
+    save(); refresh(); toast("backup restored");
+  } catch (err) { toast("could not read that file"); }
   e.target.value = "";
 };
 function doReset() {
   if (!confirm("Clear all ticks and reset dates? This cannot be undone.")) return;
   state = { dates: { ...DEFAULT_DATES }, marks: {}, theme: state.theme || "auto" };
   openChapters.clear();
-  save(); refresh(); toast("Progress reset");
+  save(); refresh(); toast("progress reset");
 }
 
 /* ------------------------------------------------------------------ PWA */
