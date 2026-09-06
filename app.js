@@ -57,7 +57,7 @@ function applyTheme() {
   const dark = t === "dark" ||
     (t === "auto" && !matchMedia("(prefers-color-scheme: light)").matches);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#1a1917" : "#faf9f5";
+  if (meta) meta.content = t === "grok" ? "#000000" : dark ? "#1a1917" : "#faf9f5";
 
   document.querySelectorAll("[data-theme-set]").forEach(b =>
     b.setAttribute("aria-pressed", b.dataset.themeSet === t));
@@ -265,6 +265,7 @@ function screenSettings() {
       <button data-theme-set="auto">auto</button>
       <button data-theme-set="light">light</button>
       <button data-theme-set="dark">dark</button>
+      <button data-theme-set="grok">grok</button>
     </div>
 
     <div class="sec">exam dates</div>

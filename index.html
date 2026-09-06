@@ -21,7 +21,8 @@
      this is a terminal. */
   try {
     var t = JSON.parse(localStorage.getItem("study-tracker-v1") || "{}").theme;
-    if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
+    if (t === "dark" || t === "light" || t === "grok")
+      document.documentElement.dataset.theme = t;
   } catch (e) {}
 </script>
 <link rel="stylesheet" href="styles.css">

@@ -52,10 +52,12 @@ Inside a subject, tapping a chapter expands its topics in place. The top bar
 shows where you are as a path (`~/study/subjects/phy`) and `esc ←` pops back
 out.
 
-**`/settings` → theme** switches between auto, light and dark. Auto follows the
-device — dark unless the system asks for light — and reacts if it changes while
-the app is open. The choice is stored with your progress and applied before
-first paint, so a forced theme never flashes the wrong colours on load.
+**`/settings` → theme** switches between auto, light, dark and grok. Auto
+follows the device — dark unless the system asks for light — and reacts if it
+changes while the app is open. **grok** is a second palette rather than a
+brightness: true black with a warm amber accent, and it ignores the system
+setting. The choice is stored with your progress and applied before first
+paint, so a forced theme never flashes the wrong colours on load.
 
 ## Countdowns
 

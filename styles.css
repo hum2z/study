@@ -35,7 +35,7 @@
 
 /* light — same terminal, paper profile */
 @media (prefers-color-scheme: light){
-  :root:not([data-theme="dark"]){
+  :root:not([data-theme="dark"]):not([data-theme="grok"]){
     --bg:#faf9f5; --card:#ffffff; --raise:#f1efe8; --border:#e2dfd4;
     --text:#26241f; --text2:#6b6862; --text3:#98948a;
     --accent:#c2603c; --accent-dim:#a04d2e;
@@ -55,6 +55,17 @@
   --press:rgba(38,36,31,.05);
   --shadow:0 8px 24px rgba(38,36,31,.10);
   color-scheme:light;
+}
+/* grok — true black with a warm amber accent, no system following */
+:root[data-theme="grok"]{
+  --bg:#000000; --card:#0b0b0b; --raise:#151515; --border:#282828;
+  --text:#ededed; --text2:#a0a0a0; --text3:#666666;
+  --accent:#e9b949; --accent-dim:#b3872a;
+  --green:#83b562; --blue:#7fa6d9; --gold:#e9b949; --plum:#b08fd4; --teal:#5fbfa8;
+  --danger:#e0685a;
+  --press:rgba(237,237,237,.07);
+  --shadow:0 10px 30px rgba(0,0,0,.7);
+  color-scheme:dark;
 }
 :root[data-theme="dark"]{
   --bg:#1a1917; --card:#201f1c; --raise:#2a2824; --border:#35322c;
