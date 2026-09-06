@@ -8,7 +8,7 @@ const DEFAULT_DATES = {
   final: "2027-05-03"    // May/June exam series
 };
 const CD_META = [
-  { key: "ielts", label: "IELTS",    colour: "var(--yellow)" },
+  { key: "ielts", label: "IELTS",    colour: "var(--teal)"  },
   { key: "mock",  label: "Mock 1",   colour: "var(--orange)" },
   { key: "final", label: "May/June", colour: "var(--blue)"   }
 ];
@@ -48,7 +48,7 @@ function applyTheme() {
   const dark = t === "dark" ||
     (t === "auto" && matchMedia("(prefers-color-scheme: dark)").matches);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#000000" : "#EFEFF4";
+  if (meta) meta.content = dark ? "#141413" : "#faf9f5";
 
   document.querySelectorAll("[data-theme-set]").forEach(b =>
     b.setAttribute("aria-pressed", b.dataset.themeSet === t));
@@ -103,7 +103,7 @@ function countdownStrip() {
   }).join("") + `</div>`;
 }
 
-function ring(pct, colour = "var(--blue)") {
+function ring(pct, colour = "var(--accent)") {
   const R = 40, C = 2 * Math.PI * R;
   return `<div class="ring">
     <svg viewBox="0 0 92 92">
@@ -119,7 +119,7 @@ function subjectRows() {
   return `<div class="card">` + SYLLABUS.map(s => {
     const st = subjectStats(s);
     return `<button class="row" data-open="${s.id}" style="--c:${s.colour}">
-      <span class="tile">${initials(s)}</span>
+      <span class="tile tint">${initials(s)}</span>
       <span class="row-main">
         <b>${esc(s.name)}</b>
         <span>${st.chaptersDone}/${st.chapters} chapters · ${st.total - st.learnt} topics left</span>

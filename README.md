@@ -2,11 +2,13 @@
 
 An offline-first PWA for tracking A Level and IELTS revision, chapter by chapter,
 with live countdowns to each exam. Built for the iPhone: it installs to the home
-screen and follows the conventions of iOS Settings: opaque grouped cards on a
-plain background, hairline separators inset to the text, coloured icon tiles,
-SF system type and push navigation. Blur is used only where Apple uses it — the
-nav bar, and the tab bar, which floats clear of the screen edges as a capsule
-that content scrolls beneath.
+screen and is styled with Anthropic's brand system: warm paper surfaces,
+hairline borders, Poppins for chrome and Lora for reading text, with the brand
+orange as the accent.
+
+Poppins and Lora are self-hosted in `fonts/` and precached by the service
+worker rather than pulled from Google at runtime, so the app looks the same
+with no connection.
 
 ## What's in it
 
