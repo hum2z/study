@@ -12,7 +12,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="study">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<!-- Not black-translucent: that makes iOS draw the page under the status bar
+     without adding the height back, so the layout ends up short by the top
+     inset and a dead band appears under the tab bar. -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <script>
   /* Paint in the right theme from the very first frame. Dark is the default:
      this is a terminal. */
