@@ -44,7 +44,8 @@ papers still assume that AS knowledge — add the earlier topics back in
 
 Three slash commands along the bottom:
 
-- **`/home`** — countdowns, overall progress and the pace needed to finish
+- **`/home`** — countdowns, today's tasks, overall progress and the pace needed
+  to finish
 - **`/subjects`** — every subject; tap one to push into its chapters
 - **`/settings`** — theme, exam dates, backup and reset
 
@@ -58,6 +59,19 @@ changes while the app is open. **grok** is a second palette rather than a
 brightness: true black with a warm amber accent, and it ignores the system
 setting. The choice is stored with your progress and applied before first
 paint, so a forced theme never flashes the wrong colours on load.
+
+## Today's tasks
+
+`/home` carries a plain checklist for the current day. Type into the `>` line
+and press return — the caret stays put, so a whole plan goes in without
+reaching for the field again. Tick tasks off with `[ ]`, drop one with `✕`,
+and the `⎿ 2/4 done` line under the panel reads `day cleared` once they're all
+ticked.
+
+The list is keyed to the local calendar day, so it turns over at your midnight,
+not UTC's. Each day gets a fresh list — unfinished tasks don't follow you into
+tomorrow. Past lists are kept for 60 days (they ride along in a backup) and
+older ones are dropped automatically.
 
 ## Countdowns
 

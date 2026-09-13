@@ -188,6 +188,27 @@ h1,h2,h3,p{margin:0}
 .cd .when{color:var(--text3);font-size:11.5px;white-space:nowrap;text-align:right;flex:0 0 auto}
 .cd.past .d,.cd.past .dot{color:var(--text3)}
 
+/* ------------------------------------------------------------- day tasks */
+.task{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;position:relative}
+.task + .task::after{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;
+                     background:var(--border)}
+.task p{flex:1;min-width:0;font-size:13px;line-height:1.5;padding-top:1px;
+        overflow-wrap:anywhere}
+.task.done p{color:var(--text3);text-decoration:line-through}
+.task .del{flex:0 0 auto;color:var(--text3);font-size:12px;padding:2px 0 2px 4px;
+           opacity:.65;transition:color .15s ease,transform .15s var(--ease)}
+.task .del:active{color:var(--danger);transform:scale(.85)}
+.task-empty{padding:10px 12px;color:var(--text3);font-size:12px}
+
+.task-add{display:flex;align-items:center;gap:8px;padding:9px 12px;
+          border-top:1px solid var(--border)}
+.task-add .p{color:var(--accent);font-weight:600;flex:0 0 auto}
+.task-add input{
+  flex:1;min-width:0;font:inherit;font-size:13px;color:var(--text);
+  background:none;border:none;padding:2px 0;outline:none;
+}
+.task-add input::placeholder{color:var(--text3)}
+
 /* ------------------------------------------------------------------ lists */
 .list{background:var(--card);border:1px solid var(--border);border-radius:var(--r);
       overflow:hidden}

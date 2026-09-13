@@ -33,10 +33,11 @@ function load() {
     if (raw && raw.marks) return {
       dates: { ...DEFAULT_DATES, ...(raw.dates || {}) },
       marks: raw.marks,
+      tasks: raw.tasks && typeof raw.tasks === "object" ? raw.tasks : {},
       theme: raw.theme || "auto"
     };
   } catch (e) { /* corrupt or unavailable — start fresh */ }
-  return { dates: { ...DEFAULT_DATES }, marks: {}, theme: "auto" };
+  return { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {}, theme: "auto" };
 }
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
@@ -44,6 +45,35 @@ function save() {
 
 const keyOf = (s, c, i) => `${s}:${c}:${i}`;
 const mark = k => state.marks[k] || { l: false, r: false };
+
+/* ------------------------------------------------------------ day tasks */
+/* A plain checklist per calendar day, keyed by local date so the list turns
+   over at your midnight rather than UTC's. */
+const TASK_HISTORY = 60;   // days of past lists kept around
+const TASK_MAX = 80;       // characters per task
+
+const dayKey = (d = new Date()) => `${d.getFullYear()}-${
+  String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const dayTasks = () => state.tasks[dayKey()] || [];
+
+function setDayTasks(list) {
+  const k = dayKey();
+  if (list.length) state.tasks[k] = list; else delete state.tasks[k];
+
+  /* Drop lists older than the window so storage cannot grow without end. */
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - TASK_HISTORY);
+  const floor = dayKey(cutoff);
+  for (const key of Object.keys(state.tasks)) if (key < floor) delete state.tasks[key];
+  save();
+}
+function addTask(text) {
+  const t = text.trim().slice(0, TASK_MAX);
+  if (!t) return false;
+  setDayTasks([...dayTasks(), { id: Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 6), t, d: false }]);
+  return true;
+}
 const el = document.getElementById.bind(document);
 const esc = s => String(s).replace(/[&<>"]/g,
   c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -129,6 +159,26 @@ function countdownPanel() {
   }).join("") + `</div>`;
 }
 
+function taskPanel() {
+  const list = dayTasks();
+  const rows = list.length ? list.map(t => `<div class="task ${t.d ? "done" : ""}">
+      <button class="tick" data-task="${t.id}" aria-pressed="${t.d}"
+        aria-label="Done">[${t.d ? "✓" : " "}]</button>
+      <p>${esc(t.t)}</p>
+      <button class="del" data-del="${t.id}" aria-label="Delete">✕</button>
+    </div>`).join("")
+    : `<div class="task-empty">nothing planned yet — type below</div>`;
+
+  return `<div class="panel" style="--c:var(--accent)">
+    ${rows}
+    <form class="task-add" id="taskForm" autocomplete="off">
+      <span class="p">&gt;</span>
+      <input id="taskInput" type="text" placeholder="add a task" maxlength="${TASK_MAX}"
+        enterkeyhint="done" autocapitalize="none" autocorrect="off" spellcheck="false">
+    </form>
+  </div>`;
+}
+
 function subjectList() {
   return `<div class="list">` + SYLLABUS.map(s => {
     const st = subjectStats(s), c = hue(s);
@@ -155,6 +205,7 @@ function screenHome() {
   const pace = (dMock && dMock > 0 && left > 0) ? (left / dMock).toFixed(1) : "0";
   const today = new Date().toLocaleDateString(undefined,
     { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  const tasks = dayTasks(), tasksDone = tasks.filter(t => t.d).length;
 
   return `<div class="screen-in">
     ${cmd("study status")}
@@ -162,6 +213,11 @@ function screenHome() {
 
     <div class="sec">countdowns</div>
     ${countdownPanel()}
+
+    <div class="sec">today</div>
+    ${taskPanel()}
+    ${tasks.length ? out(`${tasksDone}/${tasks.length} done${
+      tasksDone === tasks.length ? " — day cleared" : ""}`) : ""}
 
     <div class="sec">overall</div>
     <div class="panel">
@@ -406,6 +462,21 @@ document.addEventListener("click", e => {
     return;
   }
 
+  const taskTick = t("[data-task]");
+  if (taskTick) {
+    const id = taskTick.dataset.task;
+    setDayTasks(dayTasks().map(x => x.id === id ? { ...x, d: !x.d } : x));
+    refresh();
+    return;
+  }
+
+  const del = t("[data-del]");
+  if (del) {
+    setDayTasks(dayTasks().filter(x => x.id !== del.dataset.del));
+    refresh();
+    return;
+  }
+
   const tick = t("[data-k]");
   if (tick) {
     const k = tick.dataset.k, f = tick.dataset.f, m = { ...mark(k) };
@@ -440,6 +511,21 @@ document.addEventListener("click", e => {
   if (t("#resetBtn")) return doReset();
 });
 
+/* Entering a task keeps the caret where it is, so several can be typed in a
+   row without reaching for the field again. */
+document.addEventListener("submit", e => {
+  if (e.target.id !== "taskForm") return;
+  e.preventDefault();
+  const input = el("taskInput");
+  if (addTask(input.value)) {
+    refresh();
+    const next = el("taskInput");
+    if (next) next.focus();
+  } else {
+    input.value = "";
+  }
+});
+
 document.addEventListener("change", e => {
   const d = e.target.closest("[data-date]");
   if (!d) return;
@@ -472,6 +558,7 @@ el("importFile").onchange = async e => {
     state = {
       dates: { ...DEFAULT_DATES, ...(data.dates || {}) },
       marks: data.marks,
+      tasks: data.tasks && typeof data.tasks === "object" ? data.tasks : {},
       theme: data.theme || state.theme || "auto"
     };
     save(); refresh(); toast("backup restored");
@@ -479,8 +566,9 @@ el("importFile").onchange = async e => {
   e.target.value = "";
 };
 function doReset() {
-  if (!confirm("Clear all ticks and reset dates? This cannot be undone.")) return;
-  state = { dates: { ...DEFAULT_DATES }, marks: {}, theme: state.theme || "auto" };
+  if (!confirm("Clear all ticks, tasks and dates? This cannot be undone.")) return;
+  state = { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {},
+            theme: state.theme || "auto" };
   openChapters.clear();
   save(); refresh(); toast("progress reset");
 }
@@ -489,8 +577,15 @@ function doReset() {
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-setInterval(() => { if (current && current.dataset.view === "home") refresh(); }, 60000);
+/* Never re-render out from under a half-typed task. */
+const isTyping = () => /^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "");
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && !isTyping()) refresh();
+});
+setInterval(() => {
+  if (current && current.dataset.view === "home" && !isTyping()) refresh();
+}, 60000);
 
 applyTheme();
 setTab("home");
