@@ -69,9 +69,15 @@ and the `⎿ 2/4 done` line under the panel reads `day cleared` once they're all
 ticked.
 
 The list is keyed to the local calendar day, so it turns over at your midnight,
-not UTC's. Each day gets a fresh list — unfinished tasks don't follow you into
-tomorrow. Past lists are kept for 60 days (they ride along in a backup) and
-older ones are dropped automatically.
+not UTC's. **Anything still unticked follows you into the next day**, marked
+`↻` so you can tell it apart from what you just added; the `⎿` line counts them
+(`0/2 done · 1 carried over`). Ticked tasks stay behind on the day you finished
+them, so past lists read as a record of what actually got done.
+
+The carry runs once per day, whether you open the app or it's already sitting
+open when midnight passes. Clearing today's list leaves it cleared — nothing
+gets pulled back in. Past lists are kept for 60 days (they ride along in a
+backup) and older ones are dropped automatically.
 
 ## Countdowns
 

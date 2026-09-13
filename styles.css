@@ -195,6 +195,7 @@ h1,h2,h3,p{margin:0}
 .task p{flex:1;min-width:0;font-size:13px;line-height:1.5;padding-top:1px;
         overflow-wrap:anywhere}
 .task.done p{color:var(--text3);text-decoration:line-through}
+.task .carry{color:var(--text3);margin-right:7px;font-size:12px}
 .task .del{flex:0 0 auto;color:var(--text3);font-size:12px;padding:2px 0 2px 4px;
            opacity:.65;transition:color .15s ease,transform .15s var(--ease)}
 .task .del:active{color:var(--danger);transform:scale(.85)}

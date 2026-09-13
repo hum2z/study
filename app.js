@@ -34,10 +34,12 @@ function load() {
       dates: { ...DEFAULT_DATES, ...(raw.dates || {}) },
       marks: raw.marks,
       tasks: raw.tasks && typeof raw.tasks === "object" ? raw.tasks : {},
+      rolled: raw.rolled || "",
       theme: raw.theme || "auto"
     };
   } catch (e) { /* corrupt or unavailable — start fresh */ }
-  return { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {}, theme: "auto" };
+  return { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {}, rolled: "",
+           theme: "auto" };
 }
 function save() {
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
@@ -73,6 +75,30 @@ function addTask(text) {
   setDayTasks([...dayTasks(), { id: Date.now().toString(36) +
     Math.random().toString(36).slice(2, 6), t, d: false }]);
   return true;
+}
+
+/* Anything left unticked follows you into the next day. Runs once per day —
+   tracked by state.rolled, since an emptied list leaves no key behind and
+   would otherwise pull yesterday's tasks back in. */
+function rollOverTasks() {
+  const today = dayKey();
+  if (state.rolled === today) return 0;
+
+  const previous = Object.keys(state.tasks).filter(k => k < today).sort().pop();
+  let moved = 0;
+  if (previous) {
+    const left = state.tasks[previous].filter(t => !t.d);
+    if (left.length) {
+      state.tasks[today] = [...left.map(t => ({ ...t, c: true })),
+                            ...(state.tasks[today] || [])];
+      const done = state.tasks[previous].filter(t => t.d);
+      if (done.length) state.tasks[previous] = done; else delete state.tasks[previous];
+      moved = left.length;
+    }
+  }
+  state.rolled = today;
+  save();
+  return moved;
 }
 const el = document.getElementById.bind(document);
 const esc = s => String(s).replace(/[&<>"]/g,
@@ -164,7 +190,8 @@ function taskPanel() {
   const rows = list.length ? list.map(t => `<div class="task ${t.d ? "done" : ""}">
       <button class="tick" data-task="${t.id}" aria-pressed="${t.d}"
         aria-label="Done">[${t.d ? "✓" : " "}]</button>
-      <p>${esc(t.t)}</p>
+      <p>${t.c && !t.d ? `<span class="carry" title="carried over">↻</span>` : ""
+        }${esc(t.t)}</p>
       <button class="del" data-del="${t.id}" aria-label="Delete">✕</button>
     </div>`).join("")
     : `<div class="task-empty">nothing planned yet — type below</div>`;
@@ -206,6 +233,7 @@ function screenHome() {
   const today = new Date().toLocaleDateString(undefined,
     { weekday: "short", day: "numeric", month: "short", year: "numeric" });
   const tasks = dayTasks(), tasksDone = tasks.filter(t => t.d).length;
+  const carried = tasks.filter(t => t.c && !t.d).length;
 
   return `<div class="screen-in">
     ${cmd("study status")}
@@ -217,6 +245,7 @@ function screenHome() {
     <div class="sec">today</div>
     ${taskPanel()}
     ${tasks.length ? out(`${tasksDone}/${tasks.length} done${
+      carried ? ` · ${carried} carried over` : ""}${
       tasksDone === tasks.length ? " — day cleared" : ""}`) : ""}
 
     <div class="sec">overall</div>
@@ -559,15 +588,17 @@ el("importFile").onchange = async e => {
       dates: { ...DEFAULT_DATES, ...(data.dates || {}) },
       marks: data.marks,
       tasks: data.tasks && typeof data.tasks === "object" ? data.tasks : {},
+      rolled: data.rolled || "",
       theme: data.theme || state.theme || "auto"
     };
+    rollOverTasks();
     save(); refresh(); toast("backup restored");
   } catch (err) { toast("could not read that file"); }
   e.target.value = "";
 };
 function doReset() {
   if (!confirm("Clear all ticks, tasks and dates? This cannot be undone.")) return;
-  state = { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {},
+  state = { dates: { ...DEFAULT_DATES }, marks: {}, tasks: {}, rolled: dayKey(),
             theme: state.theme || "auto" };
   openChapters.clear();
   save(); refresh(); toast("progress reset");
@@ -581,11 +612,16 @@ if ("serviceWorker" in navigator) {
 const isTyping = () => /^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "");
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && !isTyping()) refresh();
+  if (document.hidden || isTyping()) return;
+  rollOverTasks();          // the day may have turned while we were away
+  refresh();
 });
 setInterval(() => {
-  if (current && current.dataset.view === "home" && !isTyping()) refresh();
+  if (isTyping()) return;
+  const rolled = rollOverTasks();
+  if (rolled || (current && current.dataset.view === "home")) refresh();
 }, 60000);
 
+rollOverTasks();
 applyTheme();
 setTab("home");
