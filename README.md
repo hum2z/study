@@ -1,6 +1,6 @@
 # study
 
-An offline-first PWA for tracking A Level and IELTS revision, chapter by chapter,
+An offline-first PWA for tracking A Level revision, chapter by chapter,
 with live countdowns to each exam. Built for the iPhone: it installs to the home
 screen and is styled after the Claude Code CLI — one monospace stack, box-drawn
 panels, block-character progress bars, slash-command tabs and the brand orange
@@ -24,7 +24,6 @@ with no connection.
 | Pure Maths 3 | Edexcel IAL WMA13 | Units 1–6 |
 | Pure Maths 4 | Edexcel IAL WMA14 | Units 1–7 |
 | Mechanics 1 | Edexcel IAL WME01 | Units 1–6 |
-| IELTS Academic | British Council / IDP | Listening, Reading, Writing T1/T2, Speaking, mocks |
 
 Every topic has two toggles:
 
@@ -81,11 +80,10 @@ backup) and older ones are dropped automatically.
 
 ## Countdowns
 
-Three countdowns sit at the top, recalculated every minute and on app focus:
+Two countdowns sit at the top, recalculated every minute and on app focus:
 
 | Event | Default date |
 |---|---|
-| IELTS | 29 Sep 2026 |
 | Mock 1 | 2 Nov 2026 (first Monday of November) |
 | May/June series | 3 May 2027 |
 

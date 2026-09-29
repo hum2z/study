@@ -1,7 +1,7 @@
 {
-  "name": "study — A Level & IELTS",
+  "name": "study — A Level",
   "short_name": "study",
-  "description": "Chapter-by-chapter tracker for Cambridge CS & Physics, Edexcel P3/P4/M1 and IELTS, with exam countdowns. Works offline.",
+  "description": "Chapter-by-chapter tracker for Cambridge CS & Physics, Edexcel P3/P4/M1, with exam countdowns. Works offline.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

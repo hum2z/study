@@ -3,12 +3,10 @@
 
 const STORE = "study-tracker-v1";
 const DEFAULT_DATES = {
-  ielts: "2026-09-29",   // IELTS test
   mock:  "2026-11-02",   // Mock 1, first week of November
   final: "2027-05-03"    // May/June exam series
 };
 const CD_META = [
-  { key: "ielts", label: "ielts",    colour: "var(--teal)"   },
   { key: "mock",  label: "mock-1",   colour: "var(--accent)" },
   { key: "final", label: "may-june", colour: "var(--blue)"   }
 ];
@@ -27,11 +25,19 @@ let state = load();
 let tab = "home";
 let openChapters = new Set();
 
+/* Keep only the countdowns the app still knows about, so a retired one
+   (ielts) drops out of older saves. */
+function pickDates(d = {}) {
+  const out = { ...DEFAULT_DATES };
+  for (const k in DEFAULT_DATES) if (d[k]) out[k] = d[k];
+  return out;
+}
+
 function load() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORE));
     if (raw && raw.marks) return {
-      dates: { ...DEFAULT_DATES, ...(raw.dates || {}) },
+      dates: pickDates(raw.dates),
       marks: raw.marks,
       tasks: raw.tasks && typeof raw.tasks === "object" ? raw.tasks : {},
       rolled: raw.rolled || "",
@@ -223,6 +229,35 @@ function subjectList() {
   }).join("") + `</div>`;
 }
 
+/* Per-subject bar chart: revised as the solid run, learnt-but-not-revised
+   as the paler run after it. Rows open the subject; hover shows counts. */
+let growChart = false;   // animate bars in only when a screen is first built
+
+function studyChart() {
+  const rows = SYLLABUS.map(s => {
+    const st = subjectStats(s), c = hue(s);
+    const rv = st.total ? st.revised / st.total * 100 : 0;
+    const ln = st.total ? (st.learnt - st.revised) / st.total * 100 : 0;
+    const tip = `${st.learnt}/${st.total} learnt · ${st.revised} revised · ${
+      st.chaptersDone}/${st.chapters} chapters`;
+    return `<button class="bc-row" data-open="${s.id}" style="--c:${c}"
+        aria-label="${esc(s.name)}: ${esc(tip)}">
+      <span class="bc-lab">${esc(s.short.toLowerCase())}</span>
+      <span class="bc-track">
+        ${rv ? `<span class="bc-seg rv" style="width:${rv}%"></span>` : ""}
+        ${ln ? `<span class="bc-seg ln" style="width:${ln}%"></span>` : ""}
+      </span>
+      <span class="bc-val">${st.pct}%</span>
+      <span class="bc-tip">${esc(s.name)}<br>${esc(tip)}</span>
+    </button>`;
+  }).join("");
+  return `<div class="panel bchart ${growChart ? "grow" : ""}">
+    <div class="panel-hd">studied per subject<em>
+      <span class="bc-key rv"></span>revised <span class="bc-key ln"></span>learnt</em></div>
+    <div class="panel-b">${rows}</div>
+  </div>`;
+}
+
 /* ------------------------------------------------------------- screens */
 function screenHome() {
   const o = overall();
@@ -260,6 +295,9 @@ function screenHome() {
     ${out(left > 0
       ? `${pace} topics/day to finish everything before mock-1`
       : `nothing left — the whole board is ticked`)}
+
+    <div class="sec">by subject</div>
+    ${studyChart()}
 
     <div class="sec">subjects</div>
     ${subjectList()}
@@ -355,7 +393,6 @@ function screenSettings() {
 
     <div class="sec">exam dates</div>
     <div class="list">
-      ${dateRow("ielts", "ielts")}
       ${dateRow("mock", "mock-1")}
       ${dateRow("final", "may-june")}
     </div>
@@ -390,7 +427,9 @@ function makeScreen(view) {
   const s = document.createElement("section");
   s.className = "screen";
   s.dataset.view = view;
+  growChart = true;
   s.innerHTML = bodyFor(view);
+  growChart = false;
   s.addEventListener("scroll", () => { if (s === current) syncNav(); }, { passive: true });
   return s;
 }
@@ -585,7 +624,7 @@ el("importFile").onchange = async e => {
     const data = JSON.parse(await f.text());
     if (!data.marks) throw new Error("bad file");
     state = {
-      dates: { ...DEFAULT_DATES, ...(data.dates || {}) },
+      dates: pickDates(data.dates),
       marks: data.marks,
       tasks: data.tasks && typeof data.tasks === "object" ? data.tasks : {},
       rolled: data.rolled || "",

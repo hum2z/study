@@ -1,7 +1,6 @@
 /* Syllabus data.
    Cambridge CS 9618 (2026-2028) and Physics 9702 (2025-2027) syllabuses.
-   Pearson Edexcel International A Level Mathematics spec (Issue 3): P3, P4, M1.
-   IELTS Academic: standard test structure. */
+   Pearson Edexcel International A Level Mathematics spec (Issue 3): P3, P4, M1. */
 
 const SYLLABUS = [
   {
@@ -121,31 +120,6 @@ const SYLLABUS = [
         { n: "4", t: "Dynamics of a Particle in a Straight Line or Plane", subs: ["4.1 Force and Newton's laws of motion", "4.2 Connected particles (pulleys, tow bars, lifts)", "4.3 Momentum and impulse; conservation of momentum", "4.4 Coefficient of friction (moving particle)"] },
         { n: "5", t: "Statics of a Particle", subs: ["5.1 Resolution of forces", "5.2 Equilibrium under coplanar forces", "5.3 Coefficient of friction in equilibrium"] },
         { n: "6", t: "Moments", subs: ["6.1 Moment of a force; equilibrium of a rigid body"] }
-      ]}
-    ]
-  },
-  {
-    id: "ielts",
-    short: "IE",
-    name: "IELTS Academic",
-    code: "British Council / IDP",
-    colour: "#5f938c",
-    groups: [
-      { name: "Listening (30 min)", chapters: [
-        { n: "L1", t: "Listening Skills", subs: ["Part 1 – everyday conversation (form/note completion)", "Part 2 – monologue on a social situation (maps, matching)", "Part 3 – academic discussion (MCQ, matching)", "Part 4 – academic lecture (note completion)", "Spelling, numbers, dates and plurals", "Distractors and paraphrase spotting"] }
-      ]},
-      { name: "Reading (60 min)", chapters: [
-        { n: "R1", t: "Reading Skills", subs: ["Skimming and scanning under time pressure", "Multiple choice & sentence completion", "True / False / Not Given", "Yes / No / Not Given", "Matching headings", "Matching information to paragraphs", "Matching features / sentence endings", "Summary, note, table & flow-chart completion", "Diagram label completion", "Short-answer questions"] }
-      ]},
-      { name: "Writing (60 min)", chapters: [
-        { n: "W1", t: "Task 1 – Report (150 words, 20 min)", subs: ["Line graphs", "Bar charts", "Pie charts", "Tables", "Process diagrams", "Maps / changes over time", "Mixed charts", "Overview paragraph & key trends", "Language of comparison and change"] },
-        { n: "W2", t: "Task 2 – Essay (250 words, 40 min)", subs: ["Opinion (agree/disagree)", "Discussion (both views)", "Advantages & disadvantages", "Problem & solution", "Two-part questions", "Essay structure & paragraphing", "Cohesion and linking devices", "Task response & developing ideas"] }
-      ]},
-      { name: "Speaking (11–14 min)", chapters: [
-        { n: "S1", t: "Speaking Skills", subs: ["Part 1 – introduction & familiar topics", "Part 2 – cue card long turn (1 min prep, 2 min talk)", "Part 3 – abstract discussion", "Fluency & coherence", "Lexical resource / topic vocabulary", "Grammatical range & accuracy", "Pronunciation and stress"] }
-      ]},
-      { name: "General prep", chapters: [
-        { n: "G1", t: "Practice & Review", subs: ["Full mock test 1", "Full mock test 2", "Full mock test 3", "Full mock test 4", "Vocabulary bank (topic-based)", "Grammar review (tenses, articles, complex sentences)", "Timing strategy for each section"] }
       ]}
     ]
   }

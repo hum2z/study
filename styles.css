@@ -323,3 +323,43 @@ input[type=date]{
 @media (prefers-reduced-motion: reduce){
   *{transition-duration:.01ms !important;animation-duration:.01ms !important}
 }
+
+/* ------------------------------------------------------ per-subject chart */
+.bchart .panel-hd em{display:flex;align-items:center;gap:5px}
+.bc-key{display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--text2)}
+.bc-key.ln{opacity:.4;margin-left:6px}
+.bc-row{
+  position:relative;display:flex;align-items:center;gap:10px;width:100%;
+  padding:7px 2px;border-radius:4px;text-align:left;
+}
+.bc-row:active{background:var(--press)}
+.bc-lab{flex:0 0 3.2em;color:var(--text2);font-size:12px}
+.bc-track{
+  flex:1;min-width:0;display:flex;gap:2px;height:12px;
+  background:var(--raise);border-radius:4px;overflow:hidden;
+}
+.bc-seg{height:100%;background:var(--c);transition:width .6s var(--ease)}
+.bc-seg.ln{opacity:.4}
+.bc-val{flex:0 0 3.2em;text-align:right;color:var(--text);font-size:12px}
+.grow .bc-seg{animation:bc-grow .8s var(--ease) both}
+.grow .bc-row:nth-child(2) .bc-seg{animation-delay:.05s}
+.grow .bc-row:nth-child(3) .bc-seg{animation-delay:.1s}
+.grow .bc-row:nth-child(4) .bc-seg{animation-delay:.15s}
+.grow .bc-row:nth-child(5) .bc-seg{animation-delay:.2s}
+.grow .bc-row:nth-child(6) .bc-seg{animation-delay:.25s}
+@keyframes bc-grow{from{transform:scaleX(0);transform-origin:left}
+                   to{transform:scaleX(1);transform-origin:left}}
+.bc-tip{
+  position:absolute;left:3.6em;bottom:calc(100% - 2px);z-index:5;pointer-events:none;
+  background:var(--raise);border:1px solid var(--border);border-radius:4px;
+  padding:5px 8px;font-size:11.5px;line-height:1.5;color:var(--text2);white-space:nowrap;
+  box-shadow:var(--shadow);opacity:0;transform:translateY(4px);
+  transition:opacity .15s ease,transform .15s ease;
+}
+@media (hover:hover){
+  .bc-row:hover .bc-tip{opacity:1;transform:none}
+  .bc-row:hover .bc-track{outline:1px solid var(--border);outline-offset:1px}
+}
+@media (prefers-reduced-motion:reduce){
+  .grow .bc-seg{animation:none}.bc-seg{transition:none}
+}
